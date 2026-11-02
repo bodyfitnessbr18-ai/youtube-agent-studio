@@ -1,7 +1,7 @@
-import React from "https://esm.sh/react@18.3.1";
-import {createRoot} from "https://esm.sh/react-dom@18.3.1/client?external=react";
-import {AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame, useVideoConfig} from "https://esm.sh/remotion@4.0.539?external=react";
-import {renderMediaOnWeb} from "https://esm.sh/@remotion/web-renderer@4.0.539?external=react,remotion";
+import React from "react";
+
+import {AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame, useVideoConfig} from "remotion";
+import {renderMediaOnWeb, canRenderMediaOnWeb} from "@remotion/web-renderer";
 
 const h=React.createElement;
 function Scene({scene,index,total}) {
@@ -44,7 +44,7 @@ function Video({title,scenes,audioSrc}) {
     ...safe.map((scene,i)=>h(Sequence,{key:i,from:timings[i].from,durationInFrames:timings[i].duration},h(Scene,{scene,index:i,total:safe.length})))
   );
 }
-window.renderStudioVideo=async function({props,onProgress}) {
+window.renderStudioVideo=async function({props,onProgress}) {\n  if (!("VideoEncoder" in window) || !("AudioEncoder" in window)) throw new Error("Este navegador não oferece WebCodecs para renderizar MP4. Use Chrome atualizado.");\n  const support=await canRenderMediaOnWeb({videoCodec:"h264",container:"mp4"});\n  if (!support) throw new Error("Este navegador não suporta a codificação MP4 necessária.");
   const fps=30,scenes=props.scenes||[];
   const seconds=scenes.reduce((sum,s)=>sum+Math.max(1,Number(s.durationSeconds)||8),0);
   const composition={id:"YouTubeVideoBrowser",component:Video,durationInFrames:Math.max(1,Math.ceil(seconds*fps)),fps,width:1920,height:1080,defaultProps:props};
