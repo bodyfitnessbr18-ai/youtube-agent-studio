@@ -62,10 +62,10 @@ document.querySelector('#prepareVideo').addEventListener('click',()=>{
    heading:(s.visual||s.voice||('CENA '+(i+1))).replace(/<[^>]*>/g,'').trim().split(/[.!?]/)[0].slice(0,72).toLocaleUpperCase('pt-BR'),
    narration:s.voice||'',accent:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5))
  }));
- const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:generatedAudioPath||'/voiceover.mp3',musicSrc:''};
+ const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:generatedAudioPath||'',musicSrc:''};
  const blob=new Blob([JSON.stringify(props,null,2)],{type:'application/json'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='youtube-agent-video-props.json';a.click();URL.revokeObjectURL(url);
- status.textContent='Projeto de cenas exportado. Baixe também o voiceover.mp3 gerado abaixo e coloque os dois arquivos em remotion/public/ (props.json e voiceover.mp3). Depois execute npm run render:project. O Remotion está configurado para 5 minutos em 1080p.';
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='props.json';a.click();URL.revokeObjectURL(url);
+ status.textContent='Arquivo props.json exportado. Coloque-o em remotion/public/. Gere/baixe a narração MP3 e coloque-a na mesma pasta como voiceover.mp3. A composição calculará a duração pelas cenas; depois execute npm run render:project.';
 });
 document.querySelector('#voiceButton').addEventListener('click',async()=>{
  const status=document.querySelector('#voiceStatus'),button=document.querySelector('#voiceButton');
@@ -102,7 +102,7 @@ function updatePreview(){
 document.querySelector('#downloadProps').addEventListener('click',()=>{
  if(!latestScript)return;
  const scenes=latestScript.script.map((s,i)=>({heading:s.heading||((s.visual||'CENA '+(i+1)).split(/[.!?]/)[0].slice(0,72).toUpperCase()),narration:s.voice||'',accent:s.visual||'',visual:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5))}));
- const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:'',musicSrc:''};
+ const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:generatedAudioPath,musicSrc:''};
  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(props,null,2)],{type:'application/json'}));a.href=url;a.download='props.json';a.click();URL.revokeObjectURL(url);
 });
 document.querySelector('#downloadSrt').addEventListener('click',()=>{
