@@ -329,8 +329,8 @@ async def upload_sleep_asset(file: UploadFile = File(...), kind: str = Form("ima
     if len(data) > max_bytes:
         raise HTTPException(413, "A imagem ultrapassa 4 MB. Reduza o tamanho e tente novamente.")
     valid = (
-        (ext in (".jpg", ".jpeg") and data.startswith(b"\\xff\\xd8\\xff"))
-        or (ext == ".png" and data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        (ext in (".jpg", ".jpeg") and data.startswith(b"\xff\xd8\xff"))
+        or (ext == ".png" and data.startswith(b"\x89PNG\r\n\x1a\n"))
         or (ext == ".webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP")
     )
     if not valid:
