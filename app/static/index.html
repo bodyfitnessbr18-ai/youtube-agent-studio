@@ -146,4 +146,4 @@ document.querySelector('#downloadSrt').addEventListener('click',()=>{
 
 async function checkVoiceStatus(){try{const r=await fetch('/api/voice/status');const d=await r.json();const el=document.querySelector('#voiceStatus');if(d.provider==='fish_audio')el.textContent='Fish Audio conectado · voz padrão '+(d.default_voice_configured?'configurada':'não configurada')+'.';else el.textContent='Provedor de voz: '+(d.provider||'não configurado')+'.';}catch(e){}}
 loadAgents();checkVoiceStatus();
-</script></body></html>
+</script><script type="module" src="/static/browser-render.js"></script></body></html>
