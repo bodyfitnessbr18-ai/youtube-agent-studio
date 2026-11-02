@@ -151,7 +151,7 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
                     url,
                     headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
                     json=request_payload,
-                    timeout=httpx.Timeout(35.0, connect=10.0)
+                    timeout=httpx.Timeout(18.0, connect=8.0)
                 )
                 if response.status_code in (429, 500, 502, 503, 504):
                     try:
