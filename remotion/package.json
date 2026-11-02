@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "remotion studio src/index.ts",
     "render:sample": "remotion render src/index.ts YouTubeVideo out/sample.mp4",
-    "still": "remotion still src/index.ts YouTubeVideo out/thumbnail.png"
+    "still": "remotion still src/index.ts YouTubeVideo out/thumbnail.png",
+    "render:project": "remotion render src/index.ts YouTubeVideo out/youtube-video.mp4 --props=public/props.json"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.0",
