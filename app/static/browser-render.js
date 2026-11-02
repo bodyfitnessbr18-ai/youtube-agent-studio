@@ -54,4 +54,5 @@ window.renderStudioVideo=async function({props,onProgress}) {
   const result=await renderMediaOnWeb({composition,inputProps:props,container:"mp4",videoCodec:"h264",videoBitrate:"medium",pageResponsiveness:"high",onProgress});
   return await result.getBlob();
 };
-\nwindow.dispatchEvent(new Event("studio-renderer-ready"));\n
+
+window.dispatchEvent(new Event("studio-renderer-ready"));
