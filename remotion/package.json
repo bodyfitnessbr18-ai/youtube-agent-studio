@@ -1,0 +1,20 @@
+{
+  "name": "youtube-agent-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render:sample": "remotion render src/index.ts YouTubeVideo out/sample.mp4",
+    "still": "remotion still src/index.ts YouTubeVideo out/thumbnail.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "remotion": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.6.0"
+  }
+}
