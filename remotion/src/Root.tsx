@@ -1,6 +1,7 @@
 import React from "react";
 import { Composition } from "remotion";
 import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
+import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 
 const demo: VideoProps = {
   title: "Seu dinheiro está desaparecendo?",
