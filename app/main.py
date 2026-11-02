@@ -263,7 +263,9 @@ def home():
 
 @app.get("/sleep-studio")
 def sleep_studio():
-    return FileResponse(BASE_DIR / "static" / "sleep-studio.html")\n\n@app.get("/api/health")
+    return FileResponse(BASE_DIR / "static" / "sleep-studio.html")
+
+@app.get("/api/health")
 def health():
     return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")) else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
 
