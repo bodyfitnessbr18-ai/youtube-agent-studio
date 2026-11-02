@@ -1,6 +1,6 @@
 import React from "react";
 import { Composition } from "remotion";
-import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
+import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";\nimport { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 
 const demo: VideoProps = {
