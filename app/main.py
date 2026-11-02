@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -264,6 +264,51 @@ def home():
 @app.get("/sleep-studio")
 def sleep_studio():
     return FileResponse(BASE_DIR / "static" / "sleep-studio.html")
+
+@app.post("/api/sleep/music")
+async def upload_sleep_music(file: UploadFile = File(...)):
+    """Store a Flow Music MP3 in persistent Vercel Blob storage."""
+    filename = Path(file.filename or "flow-music.mp3").name
+    if not filename.lower().endswith(".mp3"):
+        raise HTTPException(400, "Envie um arquivo com extensão .mp3.")
+    content_type = (file.content_type or "").lower()
+    if content_type not in ("audio/mpeg", "audio/mp3", "application/octet-stream", ""):
+        raise HTTPException(415, "O arquivo precisa ser um MP3.")
+    max_bytes = 4 * 1024 * 1024
+    data = await file.read(max_bytes + 1)
+    if not data:
+        raise HTTPException(400, "O arquivo está vazio.")
+    if len(data) > max_bytes:
+        raise HTTPException(413, "O MP3 ultrapassa o limite de 4 MB. Comprima o áudio e tente novamente.")
+    # MP3 files commonly start with an ID3 tag or an MPEG audio frame sync.
+    is_mp3 = data.startswith(b"ID3") or (len(data) > 1 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0)
+    if not is_mp3:
+        raise HTTPException(415, "O conteúdo enviado não parece ser um arquivo MP3 válido.")
+    if not os.getenv("BLOB_READ_WRITE_TOKEN"):
+        raise HTTPException(503, "Armazenamento ainda não conectado. Crie uma Vercel Blob Store e conecte a variável BLOB_READ_WRITE_TOKEN ao projeto.")
+    try:
+        from vercel.blob import AsyncBlobClient
+        client = AsyncBlobClient()
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", filename)[:100] or "flow-music.mp3"
+        blob = await client.put(
+            f"sleep-audio/{int(time.time())}-{safe_name}",
+            data,
+            access="public",
+            add_random_suffix=True,
+        )
+        return {
+            "ok": True,
+            "url": blob.url,
+            "pathname": blob.pathname,
+            "filename": filename,
+            "size_bytes": len(data),
+            "content_type": "audio/mpeg",
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Sleep music upload failed: %s", str(exc)[:300])
+        raise HTTPException(502, "Falha ao salvar o MP3 no armazenamento. Confira a conexão da Vercel Blob e tente novamente.")
 
 @app.get("/api/health")
 def health():
