@@ -30,21 +30,21 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 async function loadAgents(){try{const r=await fetch('/api/agents');if(!r.ok)throw Error('Não foi possível carregar os agentes');const d=await r.json();document.querySelector('#agents').innerHTML=d.agents.map(a=>'<div class="agent"><b>'+esc(a.name)+'</b> <span class="muted">· '+(a.status==='active'?'ATIVO':'PLANEJADO')+'</span><small>'+esc(a.description)+'</small></div>').join('')}catch(e){document.querySelector('#agents').textContent=e.message}}
 document.querySelector('#form').addEventListener('submit',async e=>{e.preventDefault();const btn=document.querySelector('#submit'),status=document.querySelector('#status');btn.disabled=true;status.textContent='Criando aberturas e montando o roteiro...';document.querySelector('#result').style.display='none';
 const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.duration_seconds=Number(payload.duration_seconds);
-try{const r=await fetch('/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.detail||'Erro');latestScript=d;document.querySelector('#result').style.display='block';
+try{const r=await fetch('/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});const raw=await r.text();let d={};try{d=raw?JSON.parse(raw):{}}catch(_){throw new Error('O servidor retornou uma resposta inválida (HTTP '+r.status+'). Consulte os logs da Vercel.')}if(!r.ok)throw new Error(d.detail||d.message||('Falha no servidor (HTTP '+r.status+').'));latestScript=d;document.querySelector('#result').style.display='block';
 document.querySelector('#titles').innerHTML='<b>Ideias de título</b><ol>'+d.title_ideas.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
 document.querySelector('#hooks').innerHTML=d.hooks.map(h=>'<div class="hook"><div>'+esc(h.text)+'</div><div class="score">'+h.score+'/100 · '+esc(h.band)+'</div><small class="muted">'+Object.entries(h.criteria||{}).map(([k,v])=>esc(k)+' '+v).join(' · ')+'</small></div>').join('');
 document.querySelector('#script').innerHTML=d.script.map(b=>'<div class="beat"><b>'+esc(b.time)+'</b><p>'+esc(b.voice)+'</p><small class="muted">NA TELA: '+esc(b.visual)+'</small></div>').join('');
 document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashtags||[]).join(' ');
 document.querySelector('#notes').innerHTML=(d.safety_notes||[]).map(n=>'<li>'+esc(n)+'</li>').join('');
 renderSceneEditor(); status.textContent='Gerado pelo modo: '+d.engine+'. Revise as cenas antes de exportar.';
-}catch(err){status.textContent='Erro: '+err.message}finally{btn.disabled=false}});
+}catch(err){status.textContent='Erro: '+(err.name==='TimeoutError'?'A geração ultrapassou o tempo de espera do navegador. Tente novamente.':err.message)}finally{btn.disabled=false}});
 let latestScript=null; let activeScene=0; let generatedAudioPath='';
 document.querySelector('#prepareVideo').addEventListener('click',()=>{
  const status=document.querySelector('#videoStatus');
  if(!latestScript){status.textContent='Gere o roteiro primeiro.';return;}
  const scenes=(latestScript.script||[]).map((s,i)=>({
    heading:(s.visual||s.voice||('CENA '+(i+1))).replace(/<[^>]*>/g,'').trim().split(/[.!?]/)[0].slice(0,72).toLocaleUpperCase('pt-BR'),
-   narration:s.voice||'',accent:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\\s+/).length/2.5))
+   narration:s.voice||'',accent:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5))
  }));
  const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:generatedAudioPath||'/voiceover.mp3',musicSrc:''};
  const blob=new Blob([JSON.stringify(props,null,2)],{type:'application/json'});
@@ -69,7 +69,7 @@ document.querySelector('#voiceButton').addEventListener('click',async()=>{
 function renderSceneEditor(){
  if(!latestScript)return;
  const root=document.querySelector('#sceneEditor');
- root.innerHTML=(latestScript.script||[]).map((s,i)=>'<div class="scene-edit"><b>Cena '+(i+1)+'</b><label>Título na tela</label><input data-field="heading" data-index="'+i+'" value="'+esc(s.heading||((s.visual||'Cena '+(i+1)).slice(0,65).toUpperCase()))+'"><label>Narração</label><textarea data-field="voice" data-index="'+i+'">'+esc(s.voice||'')+'</textarea><label>Orientação visual</label><textarea data-field="visual" data-index="'+i+'">'+esc(s.visual||'')+'</textarea><label>Duração estimada (segundos)</label><input type="number" min="3" max="120" data-field="durationSeconds" data-index="'+i+'" value="'+(s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\\s+/).length/2.5)))+'"></div>').join('');
+ root.innerHTML=(latestScript.script||[]).map((s,i)=>'<div class="scene-edit"><b>Cena '+(i+1)+'</b><label>Título na tela</label><input data-field="heading" data-index="'+i+'" value="'+esc(s.heading||((s.visual||'Cena '+(i+1)).slice(0,65).toUpperCase()))+'"><label>Narração</label><textarea data-field="voice" data-index="'+i+'">'+esc(s.voice||'')+'</textarea><label>Orientação visual</label><textarea data-field="visual" data-index="'+i+'">'+esc(s.visual||'')+'</textarea><label>Duração estimada (segundos)</label><input type="number" min="3" max="120" data-field="durationSeconds" data-index="'+i+'" value="'+(s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5)))+'"></div>').join('');
  root.querySelectorAll('[data-field]').forEach(el=>el.addEventListener('input',e=>{
   const i=Number(e.target.dataset.index),field=e.target.dataset.field;
   latestScript.script[i][field]=field==='durationSeconds'?Number(e.target.value):e.target.value;
@@ -85,7 +85,7 @@ function updatePreview(){
 }
 document.querySelector('#downloadProps').addEventListener('click',()=>{
  if(!latestScript)return;
- const scenes=latestScript.script.map((s,i)=>({heading:s.heading||((s.visual||'CENA '+(i+1)).split(/[.!?]/)[0].slice(0,72).toUpperCase()),narration:s.voice||'',accent:s.visual||'',visual:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\\s+/).length/2.5))}));
+ const scenes=latestScript.script.map((s,i)=>({heading:s.heading||((s.visual||'CENA '+(i+1)).split(/[.!?]/)[0].slice(0,72).toUpperCase()),narration:s.voice||'',accent:s.visual||'',visual:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5))}));
  const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:'',musicSrc:''};
  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(props,null,2)],{type:'application/json'}));a.href=url;a.download='props.json';a.click();URL.revokeObjectURL(url);
 });
@@ -93,7 +93,7 @@ document.querySelector('#downloadSrt').addEventListener('click',()=>{
  if(!latestScript)return;
  let cursor=0,lines=[];
  const stamp=t=>{const ms=Math.floor((t%1)*1000),sec=Math.floor(t)%60,min=Math.floor(t/60)%60,h=Math.floor(t/3600);return [h,min,sec].map(n=>String(n).padStart(2,'0')).join(':')+','+String(ms).padStart(3,'0')};
- latestScript.script.forEach((s,i)=>{const duration=s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\\s+/).length/2.5));const words=(s.voice||'').trim().split(/\\s+/);const chunks=[];for(let j=0;j<words.length;j+=7)chunks.push(words.slice(j,j+7).join(' '));chunks.forEach((chunk,j)=>{const start=cursor+duration*j/chunks.length,end=cursor+duration*(j+1)/chunks.length;lines.push((lines.length+1)+'\\n'+stamp(start)+' --> '+stamp(end)+'\\n'+chunk)});cursor+=duration;});
+ latestScript.script.forEach((s,i)=>{const duration=s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\s+/).length/2.5));const words=(s.voice||'').trim().split(/\s+/);const chunks=[];for(let j=0;j<words.length;j+=7)chunks.push(words.slice(j,j+7).join(' '));chunks.forEach((chunk,j)=>{const start=cursor+duration*j/chunks.length,end=cursor+duration*(j+1)/chunks.length;lines.push((lines.length+1)+'\n'+stamp(start)+' --> '+stamp(end)+'\\n'+chunk)});cursor+=duration;});
  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([lines.join('\\n\\n')],{type:'text/plain;charset=utf-8'}));a.href=url;a.download='legendas.srt';a.click();URL.revokeObjectURL(url);
 });
 
