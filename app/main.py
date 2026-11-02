@@ -144,14 +144,14 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
     last_error = None
     for model_index, model in enumerate(models):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        attempts = 2 if model_index == 0 else 1
+        attempts = 1
         for attempt in range(attempts):
             try:
                 response = httpx.post(
                     url,
                     headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
                     json=request_payload,
-                    timeout=httpx.Timeout(75.0, connect=15.0)
+                    timeout=httpx.Timeout(35.0, connect=10.0)
                 )
                 if response.status_code in (429, 500, 502, 503, 504):
                     try:
@@ -234,10 +234,25 @@ def generate_with_openai(req: ScriptRequest) -> dict:
 
 
 def generate_script(req: ScriptRequest) -> tuple[dict, str]:
-    # Gemini é o provedor principal; OpenAI fica como alternativa quando não há chave Gemini.
+    # Gemini é o principal; em falha, tenta OpenAI se configurado e nunca deixa a interface sem resposta.
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
-        result = generate_with_gemini(req)
-        return result, result.get("engine", "gemini")
+        try:
+            result = generate_with_gemini(req)
+            return result, result.get("engine", "gemini")
+        except Exception as gemini_error:
+            logger.warning("Gemini indisponível; acionando fallback: %s", str(gemini_error)[:240])
+            if os.getenv("OPENAI_API_KEY"):
+                try:
+                    result = generate_with_openai(req)
+                    result["engine"] = "openai:fallback"
+                    result.setdefault("safety_notes", []).append("Roteiro gerado pelo provedor alternativo porque o Gemini estava indisponível.")
+                    return result, "openai:fallback"
+                except Exception as openai_error:
+                    logger.exception("OpenAI fallback também falhou: %s", str(openai_error)[:240])
+            result = fallback_script(req)
+            result["engine"] = "template:fallback"
+            result.setdefault("safety_notes", []).append("Modelo de roteiro simplificado usado porque os provedores de IA estavam indisponíveis. Revise e personalize antes de gravar.")
+            return result, "template:fallback"
     if os.getenv("OPENAI_API_KEY"):
         return generate_with_openai(req), "openai"
     return fallback_script(req), "demo"
