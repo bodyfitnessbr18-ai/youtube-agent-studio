@@ -24,7 +24,7 @@ textarea{min-height:75px;resize:vertical}button{margin-top:16px;background:var(-
 <label>Perfil de voz (opcional)</label><textarea name="voice_profile" placeholder="Expressões que usa, palavras que evita, ritmo e personalidade..."></textarea>
 <label>Dados e fontes confirmadas (opcional)</label><textarea name="facts_sources" placeholder="Cole dados reais e fontes. O agente não deve inventar números."></textarea>
 <button id="submit">Gerar roteiro e avaliar hooks</button></form><div id="status" class="muted" role="status"></div>
-<div id="result"><h2>Resultado</h2><div id="videoBuild" style="margin:16px 0;padding:14px;border:1px solid #365174;border-radius:12px"><b>Próxima etapa · Produção Remotion</b><p class="muted">Transforme as cenas do roteiro em um arquivo de projeto pronto para abrir no Remotion e renderizar.</p><button type="button" id="prepareVideo">Preparar projeto de vídeo (5 minutos)</button><div id="videoStatus" class="muted" style="margin-top:10px"></div><button type="button" id="voiceButton">Gerar narração MP3 (ElevenLabs)</button><div id="voiceStatus" class="muted" style="margin-top:10px"></div></div><div id="titles"></div><h3>Hooks avaliados</h3><div id="hooks"></div><h3>Editor de cenas</h3><p class="muted">Edite os textos e o tempo de cada cena. A prévia abaixo acompanha as alterações.</p><div id="sceneEditor"></div><div class="preview"><div class="stick">🕴️</div><div><h3 id="previewHeading">Prévia da cena</h3><div id="previewNarration" class="muted">A narração aparecerá aqui.</div><p id="previewAccent"></p></div></div><div class="toolbar"><button type="button" id="downloadProps">Exportar projeto Remotion</button><button type="button" id="downloadSrt">Exportar legendas SRT</button></div><div id="script" style="display:none"></div><h3>Descrição e hashtags</h3><pre id="meta"></pre><h3>Cuidados</h3><ul id="notes"></ul></div>
+<div id="result"><h2>Resultado</h2><div id="videoBuild" style="margin:16px 0;padding:14px;border:1px solid #365174;border-radius:12px"><b>Próxima etapa · Produção Remotion</b><p class="muted">Transforme as cenas do roteiro em um arquivo de projeto pronto para abrir no Remotion e renderizar.</p><button type="button" id="prepareVideo">Preparar projeto de vídeo (5 minutos)</button><div id="videoStatus" class="muted" style="margin-top:10px"></div><button type="button" id="voiceButton">Gerar narração MP3 (Fish Audio)</button><div id="voiceStatus" class="muted" style="margin-top:10px"></div></div><div id="titles"></div><h3>Hooks avaliados</h3><div id="hooks"></div><h3>Editor de cenas</h3><p class="muted">Edite os textos e o tempo de cada cena. A prévia abaixo acompanha as alterações.</p><div id="sceneEditor"></div><div class="preview"><div class="stick">🕴️</div><div><h3 id="previewHeading">Prévia da cena</h3><div id="previewNarration" class="muted">A narração aparecerá aqui.</div><p id="previewAccent"></p></div></div><div class="toolbar"><button type="button" id="downloadProps">Exportar projeto Remotion</button><button type="button" id="downloadSrt">Exportar legendas SRT</button></div><div id="script" style="display:none"></div><h3>Descrição e hashtags</h3><pre id="meta"></pre><h3>Cuidados</h3><ul id="notes"></ul></div>
 </section></div></main><script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function loadAgents(){try{const r=await fetch('/api/agents');if(!r.ok)throw Error('Não foi possível carregar os agentes');const d=await r.json();document.querySelector('#agents').innerHTML=d.agents.map(a=>'<div class="agent"><b>'+esc(a.name)+'</b> <span class="muted">· '+(a.status==='active'?'ATIVO':'PLANEJADO')+'</span><small>'+esc(a.description)+'</small></div>').join('')}catch(e){document.querySelector('#agents').textContent=e.message}}
@@ -38,7 +38,7 @@ document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashta
 document.querySelector('#notes').innerHTML=(d.safety_notes||[]).map(n=>'<li>'+esc(n)+'</li>').join('');
 renderSceneEditor(); status.textContent='Gerado pelo modo: '+d.engine+'. Revise as cenas antes de exportar.';
 }catch(err){status.textContent='Erro: '+err.message}finally{btn.disabled=false}});
-let latestScript=null; let activeScene=0;
+let latestScript=null; let activeScene=0; let generatedAudioPath='';
 document.querySelector('#prepareVideo').addEventListener('click',()=>{
  const status=document.querySelector('#videoStatus');
  if(!latestScript){status.textContent='Gere o roteiro primeiro.';return;}
@@ -46,17 +46,17 @@ document.querySelector('#prepareVideo').addEventListener('click',()=>{
    heading:(s.visual||s.voice||('CENA '+(i+1))).replace(/<[^>]*>/g,'').trim().split(/[.!?]/)[0].slice(0,72).toLocaleUpperCase('pt-BR'),
    narration:s.voice||'',accent:s.visual||'',durationSeconds:s.durationSeconds||Math.max(8,Math.round((s.voice||'').split(/\\s+/).length/2.5))
  }));
- const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:'',musicSrc:''};
+ const props={title:(latestScript.title_ideas||['Vídeo'])[0],scenes,audioSrc:generatedAudioPath||'/voiceover.mp3',musicSrc:''};
  const blob=new Blob([JSON.stringify(props,null,2)],{type:'application/json'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='youtube-agent-video-props.json';a.click();URL.revokeObjectURL(url);
- status.textContent='Arquivo de cenas exportado. Coloque-o em remotion/public/props.json e execute npm run render:project. O Remotion está configurado para 5 minutos em 1080p.';
+ status.textContent='Projeto de cenas exportado. Baixe também o voiceover.mp3 gerado abaixo e coloque os dois arquivos em remotion/public/ (props.json e voiceover.mp3). Depois execute npm run render:project. O Remotion está configurado para 5 minutos em 1080p.';
 });
 document.querySelector('#voiceButton').addEventListener('click',async()=>{
  const status=document.querySelector('#voiceStatus'),button=document.querySelector('#voiceButton');
  if(!latestScript){status.textContent='Gere o roteiro primeiro.';return;}
  const voice=(latestScript.script||[]).map(s=>s.voice||'').join('\n\n').trim();
  if(!voice){status.textContent='O roteiro está sem narração.';return;}
- button.disabled=true;status.textContent='Solicitando narração ao ElevenLabs...';
+ button.disabled=true;status.textContent='Solicitando narração ao Fish Audio...';
  try{
   const r=await fetch('/api/voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:voice})});
   if(!r.ok){const d=await r.json();throw new Error(d.detail||'Falha ao gerar narração');}
@@ -97,5 +97,5 @@ document.querySelector('#downloadSrt').addEventListener('click',()=>{
  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([lines.join('\\n\\n')],{type:'text/plain;charset=utf-8'}));a.href=url;a.download='legendas.srt';a.click();URL.revokeObjectURL(url);
 });
 
-loadAgents();
+async function checkVoiceStatus(){try{const r=await fetch('/api/voice/status');const d=await r.json();const el=document.querySelector('#voiceStatus');if(d.provider==='fish_audio')el.textContent='Fish Audio conectado · voz padrão '+(d.default_voice_configured?'configurada':'não configurada')+'.';else el.textContent='Provedor de voz: '+(d.provider||'não configurado')+'.';}catch(e){}}\nloadAgents();checkVoiceStatus();
 </script></body></html>
