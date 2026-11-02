@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import time
@@ -15,6 +16,7 @@ try:
 except ImportError:
     OpenAI = None
 
+logger = logging.getLogger("youtube_agent_studio")
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(title="YouTube Agent Studio", version="0.1.1")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
@@ -166,11 +168,22 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
             raise RuntimeError("Gemini recusou a solicitação. Confira o modelo e os parâmetros enviados. " + api_message[:220])
         payload = response.json()
         candidates = payload.get("candidates") or []
+        finish_reason = candidates[0].get("finishReason", "no_candidate") if candidates else "no_candidate"
         parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
         raw = "".join(part.get("text", "") for part in parts)
+        logger.info("Gemini response received: model=%s candidates=%s finish_reason=%s text_chars=%s",
+                    model, len(candidates), finish_reason, len(raw))
         if not raw:
-            raise RuntimeError("Gemini não retornou conteúdo. Verifique os limites ou tente novamente.")
-        return parse_generated_script(raw, req)
+            prompt_feedback = payload.get("promptFeedback", {})
+            block_reason = prompt_feedback.get("blockReason", "sem conteúdo")
+            raise RuntimeError(f"Gemini respondeu sem texto (motivo: {block_reason}; finalização: {finish_reason}).")
+        try:
+            return parse_generated_script(raw, req)
+        except (ValueError, json.JSONDecodeError) as exc:
+            logger.exception("Gemini returned invalid script JSON: %s", str(exc)[:300])
+            demo = fallback_script(req)
+            demo["safety_notes"].insert(0, "O Gemini respondeu, mas o formato veio inválido. Este resultado é demonstrativo; tente gerar novamente.")
+            return demo
     except httpx.TimeoutException:
         raise RuntimeError("Tempo limite ao consultar o Gemini. Tente novamente.")
     except httpx.HTTPError:
@@ -222,7 +235,11 @@ def create_script(req: ScriptRequest):
     try:
         result, engine = generate_script(req)
     except RuntimeError as exc:
+        logger.exception("Script generation failed: %s", str(exc)[:300])
         raise HTTPException(502, str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected script generation error")
+        raise HTTPException(500, "Erro inesperado ao montar o roteiro. Tente novamente. Detalhe: " + str(exc)[:180])
     result["engine"] = engine
     return result
 
