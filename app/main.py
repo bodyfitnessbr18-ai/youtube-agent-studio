@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -308,6 +308,52 @@ async def upload_sleep_music(file: UploadFile = File(...)):
     except Exception as exc:
         logger.exception("Sleep music upload failed: %s", str(exc)[:300])
         raise HTTPException(502, "Falha ao salvar o MP3 no armazenamento. Confira a conexão da Vercel Blob e tente novamente.")
+
+
+@app.post("/api/sleep/asset")
+async def upload_sleep_asset(file: UploadFile = File(...), kind: str = Form("image")):
+    """Store one sleep-video scene image in persistent Vercel Blob storage."""
+    if kind != "image":
+        raise HTTPException(400, "Tipo de arquivo inválido.")
+    filename = Path(file.filename or "scene-image").name
+    ext = Path(filename).suffix.lower()
+    allowed = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    if ext not in allowed:
+        raise HTTPException(415, "Use uma imagem JPG, PNG ou WEBP.")
+    if (file.content_type or "").lower() not in (allowed[ext], "application/octet-stream", ""):
+        raise HTTPException(415, "O tipo do arquivo não corresponde à imagem.")
+    max_bytes = 4 * 1024 * 1024
+    data = await file.read(max_bytes + 1)
+    if not data:
+        raise HTTPException(400, "A imagem está vazia.")
+    if len(data) > max_bytes:
+        raise HTTPException(413, "A imagem ultrapassa 4 MB. Reduza o tamanho e tente novamente.")
+    valid = (
+        (ext in (".jpg", ".jpeg") and data.startswith(b"\\xff\\xd8\\xff"))
+        or (ext == ".png" and data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        or (ext == ".webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+    )
+    if not valid:
+        raise HTTPException(415, "O arquivo não parece ser uma imagem válida.")
+    if not os.getenv("BLOB_READ_WRITE_TOKEN"):
+        raise HTTPException(503, "Armazenamento Blob ainda não conectado.")
+    try:
+        from vercel import blob
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", filename)[:90] or "scene-image"
+        uploaded = await blob.put_blob(
+            f"sleep-images/{int(time.time())}-{safe_name}",
+            data,
+            access="public",
+            add_random_suffix=True,
+            content_type=allowed[ext],
+        )
+        return {"ok": True, "url": uploaded.url, "pathname": uploaded.pathname,
+                "filename": filename, "size_bytes": len(data), "content_type": allowed[ext]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Sleep image upload failed: %s", str(exc)[:300])
+        raise HTTPException(502, "Falha ao salvar a imagem no armazenamento.")
 
 @app.get("/api/health")
 def health():
