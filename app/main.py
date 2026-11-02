@@ -287,9 +287,10 @@ async def upload_sleep_music(file: UploadFile = File(...)):
     if not os.getenv("BLOB_READ_WRITE_TOKEN"):
         raise HTTPException(503, "Armazenamento ainda não conectado. Crie uma Vercel Blob Store e conecte a variável BLOB_READ_WRITE_TOKEN ao projeto.")
     try:
-        from vercel import blob
+        from vercel.blob import AsyncBlobClient
         safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", filename)[:100] or "flow-music.mp3"
-        uploaded = await blob.put_blob(
+        client = AsyncBlobClient()
+        uploaded = await client.put(
             f"sleep-audio/{int(time.time())}-{safe_name}",
             data,
             access="public",
@@ -338,9 +339,10 @@ async def upload_sleep_asset(file: UploadFile = File(...), kind: str = Form("ima
     if not os.getenv("BLOB_READ_WRITE_TOKEN"):
         raise HTTPException(503, "Armazenamento Blob ainda não conectado.")
     try:
-        from vercel import blob
+        from vercel.blob import AsyncBlobClient
         safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", filename)[:90] or "scene-image"
-        uploaded = await blob.put_blob(
+        client = AsyncBlobClient()
+        uploaded = await client.put(
             f"sleep-images/{int(time.time())}-{safe_name}",
             data,
             access="public",
