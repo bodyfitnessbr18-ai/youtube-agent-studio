@@ -11,7 +11,7 @@ label{display:block;color:#bdcbe0;margin:12px 0 6px}input,textarea,select{width:
 textarea{min-height:75px;resize:vertical}button{margin-top:16px;background:var(--blue);color:#071225;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;width:100%}button:disabled{opacity:.5}
 #result{margin-top:18px;display:none}.scene-edit{border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0}.scene-edit textarea{min-height:65px}.preview{background:#080d18;border:1px solid #365174;border-radius:14px;padding:18px;min-height:190px;display:flex;align-items:center;gap:18px}.preview .stick{font-size:70px}.preview h3{font-size:24px;margin:0 0 10px}.toolbar{display:flex;gap:10px;flex-wrap:wrap}.toolbar button{flex:1;min-width:140px}.hook{padding:12px;border:1px solid var(--line);border-radius:10px;margin:8px 0}.score{color:var(--green);font-weight:700}.beat{padding:12px 0;border-bottom:1px solid var(--line)}.muted{color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere}
 
-.progress-wrap{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#0b1325}.progress-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}.progress-track{height:8px;background:#26334d;border-radius:20px;overflow:hidden;margin-bottom:14px}.progress-fill{height:100%;width:0;background:var(--blue);border-radius:20px;transition:width .35s ease}.progress-steps{display:grid;gap:9px}.progress-step{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.progress-step .step-dot{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;border:1px solid #52617b;font-size:12px;flex:none}.progress-step.active{color:#fff}.progress-step.active .step-dot{border-color:var(--blue);background:#24446e;color:#fff;box-shadow:0 0 0 3px #6da8ff22}.progress-step.done{color:var(--green)}.progress-step.done .step-dot{border-color:var(--green);background:#143d35;color:var(--green)}.progress-step.error{color:#ff9292}.progress-step.error .step-dot{border-color:#ff9292;color:#ff9292}.progress-note{font-size:12px;color:var(--muted);margin-top:11px}
+.progress-wrap{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#0b1325}.progress-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}.progress-track{height:8px;background:#26334d;border-radius:20px;overflow:hidden;margin-bottom:14px}.progress-fill{height:100%;width:0;background:var(--blue);border-radius:20px;transition:width .35s ease}.progress-steps{display:grid;gap:9px}.progress-step{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.progress-step .step-dot{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;border:1px solid #52617b;font-size:12px;flex:none}.progress-step.active{color:#fff}.progress-step.active .step-dot{border-color:var(--blue);background:#24446e;color:#fff;box-shadow:0 0 0 3px #6da8ff22}.progress-step.done{color:var(--green)}.progress-step.done .step-dot{border-color:var(--green);background:#143d35;color:var(--green)}.progress-step.error{color:#ff9292}.progress-step.error .step-dot{border-color:#ff9292;color:#ff9292}.progress-note{font-size:12px;color:var(--muted);margin-top:11px}.progress-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.progress-actions button{width:auto;margin-top:10px;padding:8px 12px}.elapsed{font-variant-numeric:tabular-nums;color:#bdcbe0}
 @media(max-width:780px){.layout{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
 </style></head><body><main>
 <div class="top"><div><h1>YouTube Agent Studio</h1><div class="sub">Sua central independente de inteligência e criação para YouTube.</div></div><div class="pill">11 agentes · 1 ativo no MVP</div></div>
@@ -25,35 +25,66 @@ textarea{min-height:75px;resize:vertical}button{margin-top:16px;background:var(-
 <label>Objetivo</label><input name="goal" value="Prender a atenção, ensinar e gerar comentários">
 <label>Perfil de voz (opcional)</label><textarea name="voice_profile" placeholder="Expressões que usa, palavras que evita, ritmo e personalidade..."></textarea>
 <label>Dados e fontes confirmadas (opcional)</label><textarea name="facts_sources" placeholder="Cole dados reais e fontes. O agente não deve inventar números."></textarea>
-<button id="submit">Gerar roteiro e avaliar hooks</button></form><div id="status" class="muted" role="status"></div><div id="progress" class="progress-wrap" aria-live="polite"><div class="progress-head"><b id="progressTitle">Preparando geração</b><span id="progressCount" class="muted">0 de 4</span></div><div class="progress-track"><div id="progressFill" class="progress-fill"></div></div><div class="progress-steps"><div class="progress-step" data-step="0"><span class="step-dot">1</span><span>Preparando os dados</span></div><div class="progress-step" data-step="1"><span class="step-dot">2</span><span>IA criando hooks e roteiro</span></div><div class="progress-step" data-step="2"><span class="step-dot">3</span><span>Validando a resposta</span></div><div class="progress-step" data-step="3"><span class="step-dot">4</span><span>Exibindo o resultado</span></div></div><div id="progressNote" class="progress-note">Aguardando início...</div></div>
+<button id="submit">Gerar roteiro e avaliar hooks</button></form><div id="status" class="muted" role="status"></div><div id="progress" class="progress-wrap" aria-live="polite"><div class="progress-head"><b id="progressTitle">Preparando geração</b><span id="progressCount" class="muted">0 de 4</span></div><div class="progress-track"><div id="progressFill" class="progress-fill"></div></div><div class="progress-steps"><div class="progress-step" data-step="0"><span class="step-dot">1</span><span>Preparando os dados</span></div><div class="progress-step" data-step="1"><span class="step-dot">2</span><span>IA criando hooks e roteiro</span></div><div class="progress-step" data-step="2"><span class="step-dot">3</span><span>Validando a resposta</span></div><div class="progress-step" data-step="3"><span class="step-dot">4</span><span>Exibindo o resultado</span></div></div><div class="progress-actions"><div id="progressNote" class="progress-note">Aguardando início...</div><span id="elapsed" class="elapsed">00:00</span><button type="button" id="retryScript" hidden>Tentar novamente</button></div></div>
 <div id="result"><h2>Resultado</h2><div id="videoBuild" style="margin:16px 0;padding:14px;border:1px solid #365174;border-radius:12px"><b>Próxima etapa · Produção Remotion</b><p class="muted">Transforme as cenas do roteiro em um arquivo de projeto pronto para abrir no Remotion e renderizar.</p><button type="button" id="prepareVideo">Preparar projeto de vídeo (5 minutos)</button><div id="videoStatus" class="muted" style="margin-top:10px"></div><button type="button" id="voiceButton">Gerar narração MP3 (Fish Audio)</button><div id="voiceStatus" class="muted" style="margin-top:10px"></div></div><div id="titles"></div><h3>Hooks avaliados</h3><div id="hooks"></div><h3>Editor de cenas</h3><p class="muted">Edite os textos e o tempo de cada cena. A prévia abaixo acompanha as alterações.</p><div id="sceneEditor"></div><div class="preview"><div class="stick">🕴️</div><div><h3 id="previewHeading">Prévia da cena</h3><div id="previewNarration" class="muted">A narração aparecerá aqui.</div><p id="previewAccent"></p></div></div><div class="toolbar"><button type="button" id="downloadProps">Exportar projeto Remotion</button><button type="button" id="downloadSrt">Exportar legendas SRT</button></div><div id="script" style="display:none"></div><h3>Descrição e hashtags</h3><pre id="meta"></pre><h3>Cuidados</h3><ul id="notes"></ul></div>
 </section></div></main><script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function loadAgents(){try{const r=await fetch('/api/agents');if(!r.ok)throw Error('Não foi possível carregar os agentes');const d=await r.json();document.querySelector('#agents').innerHTML=d.agents.map(a=>'<div class="agent"><b>'+esc(a.name)+'</b> <span class="muted">· '+(a.status==='active'?'ATIVO':'PLANEJADO')+'</span><small>'+esc(a.description)+'</small></div>').join('')}catch(e){document.querySelector('#agents').textContent=e.message}}
+let generationStartedAt=0, generationTimer=null, lastPayload=null;
+function formatElapsed(ms){const total=Math.floor(ms/1000);return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')}
+function startElapsed(){generationStartedAt=Date.now();clearInterval(generationTimer);const el=document.querySelector('#elapsed');el.textContent='00:00';generationTimer=setInterval(()=>{el.textContent=formatElapsed(Date.now()-generationStartedAt)},1000)}
+function stopElapsed(){clearInterval(generationTimer);generationTimer=null;if(generationStartedAt)document.querySelector('#elapsed').textContent=formatElapsed(Date.now()-generationStartedAt)}
 function setProgress(step,note=''){
  const wrap=document.querySelector('#progress');wrap.style.display='block';
  const labels=['Preparando os dados','IA criando hooks e roteiro','Validando a resposta','Exibindo o resultado'];
  document.querySelectorAll('.progress-step').forEach((el,i)=>{el.classList.toggle('done',i<step);el.classList.toggle('active',i===step);el.classList.remove('error');el.querySelector('.step-dot').textContent=i<step?'✓':String(i+1)});
- document.querySelector('#progressTitle').textContent=labels[Math.min(step,3)];
- document.querySelector('#progressCount').textContent=step+' de 4 etapas';
- document.querySelector('#progressFill').style.width=(step/4*100)+'%';
+ document.querySelector('#progressTitle').textContent=step>=4?'Roteiro concluído':labels[Math.min(step,3)];
+ document.querySelector('#progressCount').textContent=Math.min(step,4)+' de 4 etapas';
+ document.querySelector('#progressFill').style.width=(Math.min(step,4)/4*100)+'%';
  document.querySelector('#progressNote').textContent=note;
+ document.querySelector('#retryScript').hidden=true;
 }
 function failProgress(note){
  document.querySelectorAll('.progress-step').forEach(el=>{if(el.classList.contains('active'))el.classList.add('error')});
  document.querySelector('#progressTitle').textContent='Geração interrompida';
  document.querySelector('#progressNote').textContent=note;
+ document.querySelector('#retryScript').hidden=!lastPayload;
 }
-document.querySelector('#form').addEventListener('submit',async e=>{e.preventDefault();const btn=document.querySelector('#submit'),status=document.querySelector('#status');btn.disabled=true;status.textContent='Preparando a solicitação...';document.querySelector('#result').style.display='none';setProgress(0,'Conferindo os campos e preparando o envio.');
-const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.duration_seconds=Number(payload.duration_seconds);
-try{setProgress(1,'Solicitação enviada. A IA está trabalhando; esta etapa pode levar alguns minutos.');status.textContent='Aguardando a IA criar os hooks e o roteiro...';const r=await fetch('/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});setProgress(2,'Resposta recebida. Conferindo estrutura e conteúdo.');const raw=await r.text();let d={};try{d=raw?JSON.parse(raw):{}}catch(_){throw new Error('O servidor retornou uma resposta inválida (HTTP '+r.status+'). Consulte os logs da Vercel.')}if(!r.ok)throw new Error(d.detail||d.message||('Falha no servidor (HTTP '+r.status+').'));latestScript=d;setProgress(3,'Organizando hooks, cenas, títulos e informações do roteiro.');document.querySelector('#result').style.display='block';
-document.querySelector('#titles').innerHTML='<b>Ideias de título</b><ol>'+d.title_ideas.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
-document.querySelector('#hooks').innerHTML=d.hooks.map(h=>'<div class="hook"><div>'+esc(h.text)+'</div><div class="score">'+h.score+'/100 · '+esc(h.band)+'</div><small class="muted">'+Object.entries(h.criteria||{}).map(([k,v])=>esc(k)+' '+v).join(' · ')+'</small></div>').join('');
-document.querySelector('#script').innerHTML=d.script.map(b=>'<div class="beat"><b>'+esc(b.time)+'</b><p>'+esc(b.voice)+'</p><small class="muted">NA TELA: '+esc(b.visual)+'</small></div>').join('');
-document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashtags||[]).join(' ');
-const safetyNotes=Array.isArray(d.safety_notes)?d.safety_notes:(d.safety_notes?[String(d.safety_notes)]:[]);document.querySelector('#notes').innerHTML=safetyNotes.map(n=>'<li>'+esc(n)+'</li>').join('');
-renderSceneEditor();setProgress(4,'Roteiro pronto! Revise as cenas antes de exportar.');document.querySelector('#progressCount').textContent='4 de 4 etapas';document.querySelector('#progressFill').style.width='100%';document.querySelectorAll('.progress-step').forEach(el=>{el.classList.remove('active');el.classList.add('done');el.querySelector('.step-dot').textContent='✓'});status.textContent='Gerado pelo modo: '+d.engine+'. Revise as cenas antes de exportar.';
-}catch(err){const message=err.name==='TimeoutError'?'A geração ultrapassou o tempo de espera do navegador. Tente novamente.':err.message;status.textContent='Erro: '+message;document.querySelector('#result').style.display='none';failProgress(message)}finally{btn.disabled=false}});
+async function runScriptGeneration(payload){
+ const btn=document.querySelector('#submit'),status=document.querySelector('#status');
+ btn.disabled=true;document.querySelector('#result').style.display='none';
+ setProgress(0,'Conferindo os campos e preparando o envio.');startElapsed();
+ try{
+  setProgress(1,'Solicitação enviada. Aguardando a resposta do Gemini...');
+  status.textContent='Aguardando a IA criar os hooks e o roteiro...';
+  const r=await fetch('/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(240000)});
+  setProgress(2,'Resposta recebida. Validando os dados do roteiro.');
+  const raw=await r.text();let d={};
+  try{d=raw?JSON.parse(raw):{}}catch(_){throw new Error('O servidor retornou uma resposta inválida (HTTP '+r.status+'). Tente novamente.')}
+  if(!r.ok)throw new Error(d.detail||d.message||('Falha no servidor (HTTP '+r.status+').'));
+  if(!Array.isArray(d.title_ideas)||!Array.isArray(d.hooks)||!Array.isArray(d.script))throw new Error('A resposta da IA veio incompleta. Tente novamente.');
+  latestScript=d;setProgress(3,'Organizando hooks, cenas, títulos e informações do roteiro.');
+  document.querySelector('#result').style.display='block';
+  document.querySelector('#titles').innerHTML='<b>Ideias de título</b><ol>'+d.title_ideas.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
+  document.querySelector('#hooks').innerHTML=d.hooks.map(h=>'<div class="hook"><div>'+esc(h.text)+'</div><div class="score">'+(Number(h.score)||0)+'/100 · '+esc(h.band||'')+'</div><small class="muted">'+Object.entries(h.criteria||{}).map(([k,v])=>esc(k)+' '+v).join(' · ')+'</small></div>').join('');
+  document.querySelector('#script').innerHTML=d.script.map(b=>'<div class="beat"><b>'+esc(b.time)+'</b><p>'+esc(b.voice)+'</p><small class="muted">NA TELA: '+esc(b.visual)+'</small></div>').join('');
+  document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashtags||[]).join(' ');
+  const safetyNotes=Array.isArray(d.safety_notes)?d.safety_notes:(d.safety_notes?[String(d.safety_notes)]:[]);
+  document.querySelector('#notes').innerHTML=safetyNotes.map(n=>'<li>'+esc(n)+'</li>').join('');
+  renderSceneEditor();setProgress(4,'Roteiro pronto! Revise as cenas antes de exportar.');
+  document.querySelectorAll('.progress-step').forEach(el=>{el.classList.remove('active');el.classList.add('done');el.querySelector('.step-dot').textContent='✓'});
+  status.textContent='Gerado pelo modo: '+d.engine+'. Revise as cenas antes de exportar.';
+ }catch(err){
+  const message=err.name==='TimeoutError'?'A geração excedeu o tempo limite de 4 minutos. Você pode tentar novamente.':err.message;
+  status.textContent='Erro: '+message;failProgress(message);
+ }finally{stopElapsed();btn.disabled=false;}
+}
+document.querySelector('#form').addEventListener('submit',e=>{
+ e.preventDefault();const f=new FormData(e.target),payload=Object.fromEntries(f.entries());
+ payload.duration_seconds=Number(payload.duration_seconds);lastPayload=payload;
+ runScriptGeneration(payload);
+});
+document.querySelector('#retryScript').addEventListener('click',()=>{if(lastPayload)runScriptGeneration(lastPayload)});
 let latestScript=null; let activeScene=0; let generatedAudioPath='';
 document.querySelector('#prepareVideo').addEventListener('click',()=>{
  const status=document.querySelector('#videoStatus');
