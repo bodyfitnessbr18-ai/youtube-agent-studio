@@ -6,7 +6,8 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field\nimport httpx
+from pydantic import BaseModel, Field
+import httpx
 
 try:
     from openai import OpenAI
