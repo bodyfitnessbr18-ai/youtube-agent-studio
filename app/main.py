@@ -136,7 +136,7 @@ def create_script(req: ScriptRequest):
     return result
 
 class VoiceRequest(BaseModel):
-    text: str = Field(min_length=1, max_length=5000)
+    text: str = Field(min_length=1, max_length=30000)
     voice_id: str = Field(default="", max_length=100)
 
 @app.get("/api/voice/status")
@@ -147,26 +147,53 @@ def voice_status():
         "default_voice_configured": bool(os.getenv("ELEVENLABS_VOICE_ID"))
     }
 
+def split_text_for_voice(text: str, limit: int = 4500) -> list[str]:
+    paragraphs = [p.strip() for p in re.split(r"\\n+", text) if p.strip()]
+    chunks, current = [], ""
+    for paragraph in paragraphs:
+        while len(paragraph) > limit:
+            cut = paragraph.rfind(" ", 0, limit)
+            if cut < 1:
+                cut = limit
+            piece, paragraph = paragraph[:cut].strip(), paragraph[cut:].strip()
+            if current:
+                chunks.append(current)
+                current = ""
+            chunks.append(piece)
+        candidate = (current + "\\n\\n" + paragraph).strip() if current else paragraph
+        if len(candidate) > limit:
+            if current:
+                chunks.append(current)
+            current = paragraph
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
 @app.post("/api/voice")
 def create_voice(req: VoiceRequest):
     api_key = os.getenv("ELEVENLABS_API_KEY")
     voice_id = req.voice_id or os.getenv("ELEVENLABS_VOICE_ID")
     if not api_key or not voice_id:
         raise HTTPException(503, "Configure ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID nas variáveis secretas da Vercel.")
+    audio_parts = []
     try:
-        response = httpx.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
-            headers={"xi-api-key": api_key, "Accept": "audio/mpeg", "Content-Type": "application/json"},
-            json={
-                "text": req.text,
-                "model_id": os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2"),
-                "voice_settings": {"stability": 0.48, "similarity_boost": 0.78, "style": 0.25, "use_speaker_boost": True}
-            },
-            timeout=90.0
-        )
-        if response.status_code >= 400:
-            raise HTTPException(response.status_code, "ElevenLabs não conseguiu gerar a narração. Verifique a voz, os créditos e a configuração da conta.")
-        return Response(content=response.content, media_type="audio/mpeg", headers={"Content-Disposition": "inline; filename=voiceover.mp3"})
+        for chunk in split_text_for_voice(req.text):
+            response = httpx.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+                headers={"xi-api-key": api_key, "Accept": "audio/mpeg", "Content-Type": "application/json"},
+                json={
+                    "text": chunk,
+                    "model_id": os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2"),
+                    "voice_settings": {"stability": 0.48, "similarity_boost": 0.78, "style": 0.25, "use_speaker_boost": True}
+                },
+                timeout=90.0
+            )
+            if response.status_code >= 400:
+                raise HTTPException(response.status_code, "ElevenLabs não conseguiu gerar um trecho da narração. Verifique voz, créditos e limites da conta.")
+            audio_parts.append(response.content)
+        return Response(content=b"".join(audio_parts), media_type="audio/mpeg", headers={"Content-Disposition": "inline; filename=voiceover.mp3"})
     except httpx.TimeoutException:
         raise HTTPException(504, "Tempo limite ao gerar a narração.")
     except httpx.HTTPError:
