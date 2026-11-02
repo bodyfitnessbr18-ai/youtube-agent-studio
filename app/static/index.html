@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YouTube Agent Studio</title><style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121a2d;--line:#26334d;--muted:#9aabc6;--blue:#6da8ff;--green:#52d6a0}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0b1020,#101a30);font:15px system-ui;color:#eef4ff}
+main{max-width:1120px;margin:auto;padding:28px 18px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}
+h1{font-size:clamp(25px,4vw,38px);margin:0}.sub{color:var(--muted);margin-top:7px}.pill{border:1px solid var(--line);padding:8px 12px;border-radius:30px;color:var(--green)}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:18px}.panel{background:#121a2d;border:1px solid var(--line);border-radius:16px;padding:18px}
+h2{font-size:18px;margin:0 0 14px}.agent{padding:10px 0;border-bottom:1px solid #26334d}.agent:last-child{border:0}.agent small{display:block;color:var(--muted);margin-top:3px}
+label{display:block;color:#bdcbe0;margin:12px 0 6px}input,textarea,select{width:100%;background:#0b1325;border:1px solid var(--line);border-radius:9px;padding:11px;color:#fff;font:inherit}
+textarea{min-height:75px;resize:vertical}button{margin-top:16px;background:var(--blue);color:#071225;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;width:100%}button:disabled{opacity:.5}
+#result{margin-top:18px;display:none}.hook{padding:12px;border:1px solid var(--line);border-radius:10px;margin:8px 0}.score{color:var(--green);font-weight:700}.beat{padding:12px 0;border-bottom:1px solid var(--line)}.muted{color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+</style></head><body><main>
+<div class="top"><div><h1>YouTube Agent Studio</h1><div class="sub">Sua central independente de inteligência e criação para YouTube.</div></div><div class="pill">11 agentes · 1 ativo no MVP</div></div>
+<div class="layout"><aside class="panel"><h2>Equipe de agentes</h2><div id="agents"></div><p class="muted">Os dez módulos restantes estão planejados e serão ativados por etapas.</p></aside>
+<section class="panel"><h2>01 · Roteirista inteligente</h2><form id="form">
+<label>Tema do vídeo</label><textarea name="topic" required minlength="5" placeholder="Ex.: Por que seu salário desaparece antes do fim do mês?"></textarea>
+<label>Público-alvo</label><input name="audience" value="Adultos que querem melhorar sua vida financeira">
+<label>Formato</label><select name="format"><option>YouTube Shorts</option><option>YouTube vídeo longo</option><option>Reels</option><option>TikTok</option></select>
+<label>Duração (segundos)</label><input name="duration_seconds" type="number" min="15" max="3600" value="40">
+<label>Tom de voz</label><input name="tone" value="Masculino, direto, didático e envolvente">
+<label>Objetivo</label><input name="goal" value="Prender a atenção, ensinar e gerar comentários">
+<label>Perfil de voz (opcional)</label><textarea name="voice_profile" placeholder="Expressões que usa, palavras que evita, ritmo e personalidade..."></textarea>
+<label>Dados e fontes confirmadas (opcional)</label><textarea name="facts_sources" placeholder="Cole dados reais e fontes. O agente não deve inventar números."></textarea>
+<button id="submit">Gerar roteiro e avaliar hooks</button></form><div id="status" class="muted" role="status"></div>
+<div id="result"><h2>Resultado</h2><div id="titles"></div><h3>Hooks avaliados</h3><div id="hooks"></div><h3>Roteiro por cena</h3><div id="script"></div><h3>Descrição e hashtags</h3><pre id="meta"></pre><h3>Cuidados</h3><ul id="notes"></ul></div>
+</section></div></main><script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function loadAgents(){try{const r=await fetch('/api/agents');if(!r.ok)throw Error('Não foi possível carregar os agentes');const d=await r.json();document.querySelector('#agents').innerHTML=d.agents.map(a=>'<div class="agent"><b>'+esc(a.name)+'</b> <span class="muted">· '+(a.status==='active'?'ATIVO':'PLANEJADO')+'</span><small>'+esc(a.description)+'</small></div>').join('')}catch(e){document.querySelector('#agents').textContent=e.message}}
+document.querySelector('#form').addEventListener('submit',async e=>{e.preventDefault();const btn=document.querySelector('#submit'),status=document.querySelector('#status');btn.disabled=true;status.textContent='Criando aberturas e montando o roteiro...';document.querySelector('#result').style.display='none';
+const f=new FormData(e.target),payload=Object.fromEntries(f.entries());payload.duration_seconds=Number(payload.duration_seconds);
+try{const r=await fetch('/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.detail||'Erro');document.querySelector('#result').style.display='block';
+document.querySelector('#titles').innerHTML='<b>Ideias de título</b><ol>'+d.title_ideas.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
+document.querySelector('#hooks').innerHTML=d.hooks.map(h=>'<div class="hook"><div>'+esc(h.text)+'</div><div class="score">'+h.score+'/100 · '+esc(h.band)+'</div><small class="muted">'+Object.entries(h.criteria||{}).map(([k,v])=>esc(k)+' '+v).join(' · ')+'</small></div>').join('');
+document.querySelector('#script').innerHTML=d.script.map(b=>'<div class="beat"><b>'+esc(b.time)+'</b><p>'+esc(b.voice)+'</p><small class="muted">NA TELA: '+esc(b.visual)+'</small></div>').join('');
+document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashtags||[]).join(' ');
+document.querySelector('#notes').innerHTML=(d.safety_notes||[]).map(n=>'<li>'+esc(n)+'</li>').join('');
+status.textContent='Gerado pelo modo: '+d.engine+'. Revise antes de gravar.';
+}catch(err){status.textContent='Erro: '+err.message}finally{btn.disabled=false}});
+loadAgents();
+</script></body></html>
