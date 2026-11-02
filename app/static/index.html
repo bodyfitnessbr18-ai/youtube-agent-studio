@@ -51,9 +51,9 @@ document.querySelector('#titles').innerHTML='<b>Ideias de título</b><ol>'+d.tit
 document.querySelector('#hooks').innerHTML=d.hooks.map(h=>'<div class="hook"><div>'+esc(h.text)+'</div><div class="score">'+h.score+'/100 · '+esc(h.band)+'</div><small class="muted">'+Object.entries(h.criteria||{}).map(([k,v])=>esc(k)+' '+v).join(' · ')+'</small></div>').join('');
 document.querySelector('#script').innerHTML=d.script.map(b=>'<div class="beat"><b>'+esc(b.time)+'</b><p>'+esc(b.voice)+'</p><small class="muted">NA TELA: '+esc(b.visual)+'</small></div>').join('');
 document.querySelector('#meta').textContent=(d.description||'')+'\n\n'+(d.hashtags||[]).join(' ');
-document.querySelector('#notes').innerHTML=(d.safety_notes||[]).map(n=>'<li>'+esc(n)+'</li>').join('');
+const safetyNotes=Array.isArray(d.safety_notes)?d.safety_notes:(d.safety_notes?[String(d.safety_notes)]:[]);document.querySelector('#notes').innerHTML=safetyNotes.map(n=>'<li>'+esc(n)+'</li>').join('');
 renderSceneEditor();setProgress(4,'Roteiro pronto! Revise as cenas antes de exportar.');document.querySelector('#progressCount').textContent='4 de 4 etapas';document.querySelector('#progressFill').style.width='100%';document.querySelectorAll('.progress-step').forEach(el=>{el.classList.remove('active');el.classList.add('done');el.querySelector('.step-dot').textContent='✓'});status.textContent='Gerado pelo modo: '+d.engine+'. Revise as cenas antes de exportar.';
-}catch(err){const message=err.name==='TimeoutError'?'A geração ultrapassou o tempo de espera do navegador. Tente novamente.':err.message;status.textContent='Erro: '+message;failProgress(message)}finally{btn.disabled=false}});
+}catch(err){const message=err.name==='TimeoutError'?'A geração ultrapassou o tempo de espera do navegador. Tente novamente.':err.message;status.textContent='Erro: '+message;document.querySelector('#result').style.display='none';failProgress(message)}finally{btn.disabled=false}});
 let latestScript=null; let activeScene=0; let generatedAudioPath='';
 document.querySelector('#prepareVideo').addEventListener('click',()=>{
  const status=document.querySelector('#videoStatus');
