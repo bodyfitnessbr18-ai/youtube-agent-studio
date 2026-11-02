@@ -1,34 +1,65 @@
 import React from "react";
-import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 
-export type Scene = { heading: string; narration: string; accent?: string };
-export type VideoProps = { title: string; scenes: Scene[] };
+export type Scene = { heading: string; narration: string; accent?: string; visual?: string };
+export type VideoProps = { title: string; scenes: Scene[]; audioSrc?: string; musicSrc?: string };
 
-const SceneCard: React.FC<{scene: Scene; index: number; total: number}> = ({scene,index,total}) => {
-  const frame = useCurrentFrame();
-  const {durationInFrames} = useVideoConfig();
-  const opacity = interpolate(frame,[0,18,durationInFrames-18,durationInFrames],[0,1,1,0],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
-  const drift = interpolate(frame,[0,durationInFrames],[28,-20]);
-  return <AbsoluteFill style={{justifyContent:"center",padding:"9%",background:"radial-gradient(circle at 80% 20%, #244b79 0%, #101b32 38%, #080d18 100%)",color:"#f7f9ff",fontFamily:"Arial, sans-serif",opacity}}>
-    <div style={{position:"absolute",top:70,left:"9%",fontSize:24,letterSpacing:7,color:"#8fbaff"}}>YOUTUBE AGENT STUDIO</div>
-    <div style={{position:"absolute",right:"9%",top:70,fontSize:22,color:"#9fb0c9"}}>{String(index+1).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>
-    <div style={{transform:`translateY(${drift}px)`,maxWidth:1450}}>
-      <div style={{width:110,height:8,background:"#68a7ff",borderRadius:8,marginBottom:42}}/>
-      <div style={{fontSize:78,fontWeight:900,lineHeight:1.05,letterSpacing:-2}}>{scene.heading}</div>
-      <div style={{fontSize:38,lineHeight:1.35,color:"#d6e2f5",marginTop:44,maxWidth:1250}}>{scene.narration}</div>
-      {scene.accent && <div style={{fontSize:28,color:"#83b6ff",marginTop:54,fontWeight:700}}>{scene.accent}</div>}
+const StickyMan: React.FC<{mood?: "worried"|"happy"|"thinking"|"confident"}> = ({mood="thinking"}) => {
+  const frame=useCurrentFrame();
+  const bob=Math.sin(frame/9)*7;
+  const arm=Math.sin(frame/13)*10;
+  const face=mood==="worried"?"☹":mood==="happy"?"☺":mood==="confident"?"😎":"?";
+  return <div style={{width:360,height:520,position:"relative",transform:`translateY(${bob}px)`}}>
+    <svg viewBox="0 0 360 520" width="100%" height="100%">
+      <ellipse cx="180" cy="500" rx="105" ry="13" fill="#00000055"/>
+      <circle cx="180" cy="92" r="62" fill="#fff" stroke="#111827" strokeWidth="13"/>
+      <path d="M120 78 Q180 5 240 78" fill="none" stroke="#111827" strokeWidth="12" strokeLinecap="round"/>
+      <circle cx="160" cy="94" r="6" fill="#111827"/><circle cx="202" cy="94" r="6" fill="#111827"/>
+      <path d={mood==="worried"?"M158 128 Q180 110 202 128":mood==="happy"?"M155 119 Q180 148 205 119":"M160 126 Q180 136 200 126"} fill="none" stroke="#111827" strokeWidth="6" strokeLinecap="round"/>
+      <path d="M180 158 L180 340" stroke="#111827" strokeWidth="20" strokeLinecap="round"/>
+      <path d={`M180 200 L${95+arm} 285`} stroke="#111827" strokeWidth="17" strokeLinecap="round"/>
+      <path d={`M180 200 L${270-arm} 270`} stroke="#111827" strokeWidth="17" strokeLinecap="round"/>
+      <path d="M180 340 L120 465 M180 340 L245 465" stroke="#111827" strokeWidth="20" strokeLinecap="round"/>
+      <path d="M90 470 L130 470 M225 470 L270 470" stroke="#111827" strokeWidth="18" strokeLinecap="round"/>
+      <path d="M130 220 Q180 185 230 220 L225 335 L135 335 Z" fill="#68a7ff" stroke="#111827" strokeWidth="9"/>
+      <text x="180" y="284" textAnchor="middle" fontSize="24" fontWeight="900" fill="#071225">SM</text>
+    </svg>
+    <div style={{position:"absolute",top:0,right:-4,background:"#fff",color:"#111827",border:"5px solid #111827",borderRadius:28,padding:"12px 20px",fontSize:42,fontWeight:900,boxShadow:"7px 7px 0 #000"}}>{face}</div>
+  </div>;
+};
+
+const SceneCard: React.FC<{scene: Scene; index:number; total:number}> = ({scene,index,total}) => {
+  const frame=useCurrentFrame();
+  const {durationInFrames}=useVideoConfig();
+  const opacity=interpolate(frame,[0,20,durationInFrames-20,durationInFrames],[0,1,1,0],{extrapolateLeft:"clamp",extrapolateRight:"clamp"});
+  const zoom=interpolate(frame,[0,durationInFrames],[1,1.045]);
+  const mood=index===0?"worried":index===total-1?"confident":index%2===0?"thinking":"happy";
+  return <AbsoluteFill style={{justifyContent:"center",padding:"6% 8%",background:"radial-gradient(circle at 78% 20%, #244b79 0%, #101b32 38%, #080d18 100%)",color:"#f7f9ff",fontFamily:"Arial, sans-serif",opacity}}>
+    <div style={{position:"absolute",inset:0,transform:`scale(${zoom})`,background:"linear-gradient(115deg,transparent 48%,#ffffff08 49%,transparent 65%)"}}/>
+    <div style={{position:"absolute",top:55,left:"8%",fontSize:22,letterSpacing:6,color:"#8fbaff",fontWeight:800}}>STICKY MAN FINANÇAS</div>
+    <div style={{position:"absolute",right:"8%",top:55,fontSize:22,color:"#9fb0c9"}}>{String(index+1).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:35,zIndex:1}}>
+      <div style={{flex:1,maxWidth:1100}}>
+        <div style={{width:100,height:8,background:"#68a7ff",borderRadius:8,marginBottom:35}}/>
+        <div style={{fontSize:68,fontWeight:900,lineHeight:1.04,letterSpacing:-2}}>{scene.heading}</div>
+        <div style={{fontSize:34,lineHeight:1.35,color:"#d6e2f5",marginTop:35}}>{scene.narration}</div>
+        {scene.accent&&<div style={{fontSize:27,color:"#83b6ff",marginTop:38,fontWeight:800}}>{scene.accent}</div>}
+      </div>
+      <div style={{width:350,flexShrink:0}}><StickyMan mood={mood}/></div>
     </div>
-    <div style={{position:"absolute",bottom:70,left:"9%",right:"9%",height:5,background:"#ffffff22",borderRadius:9}}>
-      <div style={{height:"100%",width:`${(frame/durationInFrames)*100}%`,background:"#68a7ff",borderRadius:9}}/>
+    <div style={{position:"absolute",bottom:55,left:"8%",right:"8%",height:5,background:"#ffffff22",borderRadius:9}}>
+      <div style={{height:"100%",width:`${frame/durationInFrames*100}%`,background:"#68a7ff",borderRadius:9}}/>
     </div>
   </AbsoluteFill>;
 };
 
-export const YouTubeVideo: React.FC<VideoProps> = ({title,scenes}) => {
-  const {fps,durationInFrames} = useVideoConfig();
-  const safeScenes = scenes.length ? scenes : [{heading:title,narration:"Adicione cenas ao roteiro para começar.",accent:""}];
-  const perScene = Math.floor(durationInFrames/safeScenes.length);
+export const YouTubeVideo: React.FC<VideoProps> = ({title,scenes,audioSrc,musicSrc}) => {
+  const {durationInFrames}=useVideoConfig();
+  const safeScenes=scenes.length?scenes:[{heading:title,narration:"Adicione cenas ao roteiro para começar."}];
+  const perScene=Math.floor(durationInFrames/safeScenes.length);
   return <AbsoluteFill style={{background:"#080d18"}}>
+    {audioSrc&&<Audio src={audioSrc}/>}
+    {musicSrc&&<Audio src={musicSrc} volume={0.12}/>}
     {safeScenes.map((scene,index)=><Sequence key={index} from={index*perScene} durationInFrames={index===safeScenes.length-1?durationInFrames-index*perScene:perScene}>
       <SceneCard scene={scene} index={index} total={safeScenes.length}/>
     </Sequence>)}
