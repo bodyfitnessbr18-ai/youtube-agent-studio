@@ -127,7 +127,7 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY não configurada.")
     system, user = build_script_prompt(req)
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     try:
         response = httpx.post(
