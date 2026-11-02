@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -18,7 +18,7 @@ except ImportError:
 
 logger = logging.getLogger("youtube_agent_studio")
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="YouTube Agent Studio", version="0.1.1")
+app = FastAPI(title="YouTube Agent Studio", version="0.1.2")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 AGENTS = [
@@ -144,15 +144,26 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75, "maxOutputTokens": 8192}
         }
         response = None
+        # Duas tentativas para falhas transitórias; o limite total fica abaixo
+        # do tempo máximo configurado para a função na Vercel.
         for attempt in range(2):
-            response = httpx.post(
-                url,
-                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                json=payload,
-                timeout=180.0
-            )
+            try:
+                response = httpx.post(
+                    url,
+                    headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=httpx.Timeout(110.0, connect=15.0)
+                )
+            except httpx.TimeoutException:
+                logger.warning("Gemini timeout on attempt %s/2", attempt + 1)
+                if attempt == 0:
+                    time.sleep(2)
+                    continue
+                raise
             if response.status_code not in (500, 502, 503, 504) or attempt == 1:
                 break
+            logger.warning("Gemini transient HTTP %s on attempt %s/2", response.status_code, attempt + 1)
+            time.sleep(2)
             time.sleep(1.5)
         if response.status_code >= 400:
             try:
@@ -231,17 +242,36 @@ def agents():
     return {"agents": AGENTS}
 
 @app.post("/api/script")
-def create_script(req: ScriptRequest):
+def create_script(req: ScriptRequest, request: Request):
+    started = time.monotonic()
+    request_id = request.headers.get("x-vercel-id") or request.headers.get("x-request-id") or "local"
+    logger.info("Script request started: request_id=%s topic_chars=%s duration=%s",
+                request_id, len(req.topic), req.duration_seconds)
     try:
         result, engine = generate_script(req)
+        # Normalize the payload so a slightly irregular model response cannot
+        # break the browser while it is rendering the result.
+        result["title_ideas"] = [str(x) for x in result.get("title_ideas", []) if x is not None]
+        result["hooks"] = [x for x in result.get("hooks", []) if isinstance(x, dict) and x.get("text")]
+        result["script"] = [
+            {"time": str(x.get("time", "")), "voice": str(x.get("voice", "")),
+             "visual": str(x.get("visual", ""))}
+            for x in result.get("script", []) if isinstance(x, dict)
+        ]
+        if not result["title_ideas"] or not result["hooks"] or not result["script"]:
+            raise RuntimeError("A IA retornou um roteiro incompleto. Tente novamente.")
+        result["engine"] = engine
+        logger.info("Script request completed: request_id=%s engine=%s hooks=%s scenes=%s elapsed_seconds=%.1f",
+                    request_id, engine, len(result["hooks"]), len(result["script"]), time.monotonic() - started)
+        return result
     except RuntimeError as exc:
-        logger.exception("Script generation failed: %s", str(exc)[:300])
+        logger.exception("Script generation failed: request_id=%s elapsed_seconds=%.1f error=%s",
+                         request_id, time.monotonic() - started, str(exc)[:300])
         raise HTTPException(502, str(exc))
     except Exception as exc:
-        logger.exception("Unexpected script generation error")
+        logger.exception("Unexpected script generation error: request_id=%s elapsed_seconds=%.1f",
+                         request_id, time.monotonic() - started)
         raise HTTPException(500, "Erro inesperado ao montar o roteiro. Tente novamente. Detalhe: " + str(exc)[:180])
-    result["engine"] = engine
-    return result
 
 class VoiceRequest(BaseModel):
     text: str = Field(min_length=1, max_length=30000)
