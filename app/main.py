@@ -355,6 +355,48 @@ async def upload_sleep_asset(file: UploadFile = File(...), kind: str = Form("ima
         logger.exception("Sleep image upload failed: %s", str(exc)[:300])
         raise HTTPException(502, "Falha ao salvar a imagem no armazenamento.")
 
+@app.post("/api/sleep/asset-binary")
+async def upload_sleep_asset_binary(request: Request):
+    """Receive a raw image body to avoid multipart upload issues on mobile browsers."""
+    from urllib.parse import unquote
+    filename = Path(unquote(request.headers.get("x-file-name", "scene-image.jpg"))).name
+    ext = Path(filename).suffix.lower()
+    allowed = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    if ext not in allowed:
+        raise HTTPException(415, "Use uma imagem JPG, PNG ou WEBP.")
+    data = await request.body()
+    if not data:
+        raise HTTPException(400, "A imagem está vazia.")
+    if len(data) > 4 * 1024 * 1024:
+        raise HTTPException(413, "A imagem ultrapassa 4 MB.")
+    valid = (
+        (ext in (".jpg", ".jpeg") and data.startswith(b"\\xff\\xd8\\xff"))
+        or (ext == ".png" and data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        or (ext == ".webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+    )
+    if not valid:
+        raise HTTPException(415, "O arquivo não parece ser uma imagem válida.")
+    if not os.getenv("BLOB_READ_WRITE_TOKEN"):
+        raise HTTPException(503, "Armazenamento Blob ainda não conectado.")
+    try:
+        from vercel import blob
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", filename)[:90] or "scene-image.jpg"
+        uploaded = await blob.put_blob(
+            f"sleep-images/{int(time.time())}-{safe_name}",
+            data,
+            access="public",
+            add_random_suffix=True,
+            content_type=allowed[ext],
+        )
+        logger.info("Sleep image binary upload completed: filename=%s size=%s", safe_name, len(data))
+        return {"ok": True, "url": uploaded.url, "pathname": uploaded.pathname,
+                "filename": filename, "size_bytes": len(data), "content_type": allowed[ext]}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Sleep image binary upload failed: %s", str(exc)[:300])
+        raise HTTPException(502, "Falha ao salvar a imagem no armazenamento.")
+
 @app.get("/api/health")
 def health():
     return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")) else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
