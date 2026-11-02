@@ -139,7 +139,7 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
     request_payload = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75, "maxOutputTokens": 8192}
+        "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 8192}
     }
     last_error = None
     for model_index, model in enumerate(models):
@@ -236,7 +236,8 @@ def generate_with_openai(req: ScriptRequest) -> dict:
 def generate_script(req: ScriptRequest) -> tuple[dict, str]:
     # Gemini é o provedor principal; OpenAI fica como alternativa quando não há chave Gemini.
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
-        return generate_with_gemini(req), "gemini"
+        result = generate_with_gemini(req)
+        return result, result.get("engine", "gemini")
     if os.getenv("OPENAI_API_KEY"):
         return generate_with_openai(req), "openai"
     return fallback_script(req), "demo"
