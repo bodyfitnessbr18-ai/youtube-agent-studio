@@ -1,6 +1,6 @@
 import React from "react";
 import { Composition } from "remotion";
-import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";\nimport { SleepVideo, type SleepVideoProps } from "./SleepVideo";
+import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
 import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 
 const demo: VideoProps = {
@@ -14,28 +14,47 @@ const demo: VideoProps = {
   ]
 };
 
+const sleepDemo: SleepVideoProps = {
+  title: "Moonlight Ocean Dreams",
+  durationSeconds: 3600,
+  musicSrc: "",
+  audioLoop: true,
+  scenes: Array.from({ length: 6 }, (_, index) => ({
+    title: "Moonlit ocean scene " + (index + 1),
+    durationSeconds: 600,
+    imageSrc: "",
+  })),
+};
+
 const estimateSceneSeconds = (scene: VideoProps["scenes"][number]) =>
-  Math.max(
-    3,
-    scene.durationSeconds ??
-      Math.max(8, Math.round((scene.narration || "").trim().split(/\\s+/).filter(Boolean).length / 2.5))
-  );
+  Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\s+/).filter(Boolean).length / 2.5)));
 
 export const RemotionRoot: React.FC = () => (
-  <Composition
-    id="YouTubeVideo"
-    component={YouTubeVideo}
-    durationInFrames={9000}
-    fps={30}
-    width={1920}
-    height={1080}
-    defaultProps={demo}
-    calculateMetadata={({ props }) => {
-      const totalSeconds = props.scenes.reduce(
-        (total, scene) => total + estimateSceneSeconds(scene),
-        0
-      );
-      return { durationInFrames: Math.max(1, Math.ceil(totalSeconds * 30)) };
-    }}
-  />
+  <>
+    <Composition
+      id="YouTubeVideo"
+      component={YouTubeVideo}
+      durationInFrames={9000}
+      fps={30}
+      width={1920}
+      height={1080}
+      defaultProps={demo}
+      calculateMetadata={({ props }) => {
+        const totalSeconds = props.scenes.reduce((total, scene) => total + estimateSceneSeconds(scene), 0);
+        return { durationInFrames: Math.max(1, Math.ceil(totalSeconds * 30)) };
+      }}
+    />
+    <Composition
+      id="SleepVideo"
+      component={SleepVideo}
+      durationInFrames={108000}
+      fps={30}
+      width={1920}
+      height={1080}
+      defaultProps={sleepDemo}
+      calculateMetadata={({ props }) => ({
+        durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)),
+      })}
+    />
+  </>
 );
