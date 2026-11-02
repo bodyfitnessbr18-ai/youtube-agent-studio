@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -123,35 +124,46 @@ def parse_generated_script(raw: str, req: ScriptRequest) -> dict:
 
 
 def generate_with_gemini(req: ScriptRequest) -> dict:
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY não configurada.")
     system, user = build_script_prompt(req)
     # Compatibilidade: contas novas não têm acesso ao Gemini 2.5 Flash.
     # Se a Vercel ainda tiver GEMINI_MODEL configurada com o modelo antigo,
     # atualizamos automaticamente para o modelo estável recomendado.
-    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
-    if model in {"gemini-2.5-flash", "models/gemini-2.5-flash"}:
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip().removeprefix("models/")
+    if not model or "gemini-2.5-flash" in model or "gemini-2.0-flash" in model:
         model = "gemini-3.8-flash"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     try:
-        response = httpx.post(
-            url,
-            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-            json={
-                "systemInstruction": {"parts": [{"text": system}]},
-                "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
-                "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75}
-            },
-            timeout=90.0
-        )
+        payload = {
+            "systemInstruction": {"parts": [{"text": system}]},
+            "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75, "maxOutputTokens": 8192}
+        }
+        response = None
+        for attempt in range(2):
+            response = httpx.post(
+                url,
+                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=180.0
+            )
+            if response.status_code not in (500, 502, 503, 504) or attempt == 1:
+                break
+            time.sleep(1.5)
         if response.status_code >= 400:
-            detail = "Gemini recusou a solicitação. Confira a chave, o modelo e os limites da API."
             try:
-                detail += " " + response.json().get("error", {}).get("message", "")[:300]
+                api_message = response.json().get("error", {}).get("message", "")
             except Exception:
-                pass
-            raise RuntimeError(detail)
+                api_message = ""
+            if response.status_code in (401, 403):
+                raise RuntimeError("A chave Gemini foi recusada. Confira GEMINI_API_KEY nas variáveis da Vercel.")
+            if response.status_code == 429:
+                raise RuntimeError("O limite ou a cota da API Gemini foi atingido. Confira o faturamento e os limites no Google AI Studio. " + api_message[:220])
+            if response.status_code in (500, 502, 503, 504):
+                raise RuntimeError("O Gemini está temporariamente indisponível. Tente novamente em alguns instantes. " + api_message[:220])
+            raise RuntimeError("Gemini recusou a solicitação. Confira o modelo e os parâmetros enviados. " + api_message[:220])
         payload = response.json()
         candidates = payload.get("candidates") or []
         parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
@@ -187,7 +199,7 @@ def generate_with_openai(req: ScriptRequest) -> dict:
 
 def generate_script(req: ScriptRequest) -> tuple[dict, str]:
     # Gemini é o provedor principal; OpenAI fica como alternativa quando não há chave Gemini.
-    if os.getenv("GEMINI_API_KEY"):
+    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return generate_with_gemini(req), "gemini"
     if os.getenv("OPENAI_API_KEY"):
         return generate_with_openai(req), "openai"
@@ -199,7 +211,7 @@ def home():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if os.getenv("GEMINI_API_KEY") else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
+    return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")) else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
 
 @app.get("/api/agents")
 def agents():
@@ -232,7 +244,7 @@ def voice_status():
 
 
 def split_text_for_voice(text: str, limit: int = 4500) -> list[str]:
-    paragraphs = [p.strip() for p in re.split(r"\\n+", text) if p.strip()]
+    paragraphs = [p.strip() for p in re.split(r"\n+", text) if p.strip()]
     chunks, current = [], ""
     for paragraph in paragraphs:
         while len(paragraph) > limit:
