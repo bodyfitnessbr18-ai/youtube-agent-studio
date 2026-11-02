@@ -370,8 +370,8 @@ async def upload_sleep_asset_binary(request: Request):
     if len(data) > 4 * 1024 * 1024:
         raise HTTPException(413, "A imagem ultrapassa 4 MB.")
     valid = (
-        (ext in (".jpg", ".jpeg") and data.startswith(b"\\xff\\xd8\\xff"))
-        or (ext == ".png" and data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"))
+        (ext in (".jpg", ".jpeg") and data.startswith(bytes([0xFF, 0xD8, 0xFF])))
+        or (ext == ".png" and data.startswith(bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])))
         or (ext == ".webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP")
     )
     if not valid:
