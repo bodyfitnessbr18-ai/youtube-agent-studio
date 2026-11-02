@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field\nimport httpx
 
 try:
     from openai import OpenAI
@@ -133,3 +133,40 @@ def create_script(req: ScriptRequest):
     result = generate_with_openai(req)
     result["engine"] = "openai" if os.getenv("OPENAI_API_KEY") else "demo"
     return result
+
+class VoiceRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+    voice_id: str = Field(default="", max_length=100)
+
+@app.get("/api/voice/status")
+def voice_status():
+    return {
+        "provider": "elevenlabs",
+        "configured": bool(os.getenv("ELEVENLABS_API_KEY") and os.getenv("ELEVENLABS_VOICE_ID")),
+        "default_voice_configured": bool(os.getenv("ELEVENLABS_VOICE_ID"))
+    }
+
+@app.post("/api/voice")
+def create_voice(req: VoiceRequest):
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    voice_id = req.voice_id or os.getenv("ELEVENLABS_VOICE_ID")
+    if not api_key or not voice_id:
+        raise HTTPException(503, "Configure ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID nas variáveis secretas da Vercel.")
+    try:
+        response = httpx.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            headers={"xi-api-key": api_key, "Accept": "audio/mpeg", "Content-Type": "application/json"},
+            json={
+                "text": req.text,
+                "model_id": os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2"),
+                "voice_settings": {"stability": 0.48, "similarity_boost": 0.78, "style": 0.25, "use_speaker_boost": True}
+            },
+            timeout=90.0
+        )
+        if response.status_code >= 400:
+            raise HTTPException(response.status_code, "ElevenLabs não conseguiu gerar a narração. Verifique a voz, os créditos e a configuração da conta.")
+        return Response(content=response.content, media_type="audio/mpeg", headers={"Content-Disposition": "inline; filename=voiceover.mp3"})
+    except httpx.TimeoutException:
+        raise HTTPException(504, "Tempo limite ao gerar a narração.")
+    except httpx.HTTPError:
+        raise HTTPException(502, "Falha de comunicação com o serviço de narração.")
