@@ -8,14 +8,17 @@ Painel web independente para uma equipe planejada de 11 agentes. Nesta primeira 
 - API `GET /api/agents`, `GET /api/health` e `POST /api/script`.
 - Cinco hooks avaliados por critérios heurísticos, roteiro por cenas, títulos, descrição e hashtags.
 - Modo demonstração sem chave de API.
-- Integração OpenAI opcional no backend. A chave não é enviada ao navegador.
+- Integração Gemini API (modelo padrão `gemini-3.8-flash`) e alternativa OpenAI. As chaves ficam somente no backend.
+- Geração de narração por Fish Audio ou ElevenLabs.
+- Exportação de cenas/props para Remotion e legendas SRT.
 
 ## Deploy na Vercel
 O projeto inclui `api/index.py` e `vercel.json` para expor a aplicação FastAPI como função Python.
 
 1. Importe este repositório na Vercel.
-2. Configure a variável `OPENAI_API_KEY` como segredo no projeto (opcional para o modo demo).
-3. Configure `OPENAI_MODEL` com um modelo disponível na sua conta (padrão atual: `gpt-4.1-mini`).
+2. Configure `GEMINI_API_KEY` como variável secreta no projeto. O modelo padrão é `gemini-3.8-flash`; opcionalmente, configure `GEMINI_MODEL`.
+3. Para narração, configure `FISH_API_KEY` e, se necessário, `FISH_AUDIO_VOICE_ID`. Como alternativa, use `ELEVENLABS_API_KEY` e `ELEVENLABS_VOICE_ID`.
+4. Opcionalmente, configure `OPENAI_API_KEY` e `OPENAI_MODEL` como provedor alternativo.
 4. Faça o deploy.
 
 ## Execução local
@@ -37,7 +40,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Sem `OPENAI_API_KEY`, a API usa um roteiro demonstrativo. Não publique uma chave no GitHub.
+Sem credenciais de IA, a API usa um roteiro demonstrativo. Nunca publique chaves no GitHub.
 
 ## Exemplo de requisição
 ```json
