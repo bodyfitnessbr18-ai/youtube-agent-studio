@@ -82,25 +82,92 @@ def fallback_script(req: ScriptRequest) -> dict:
             "hashtags": ["#YouTube", "#Conteudo", "#Aprendizado"],
             "safety_notes": ["Confirme números, datas e afirmações antes de gravar.", "A pontuação do hook é uma heurística, não uma garantia de desempenho."]}
 
-def generate_with_openai(req: ScriptRequest) -> dict:
-    if OpenAI is None:
-        raise HTTPException(500, "Pacote openai não instalado. Execute pip install -r requirements.txt.")
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        return fallback_script(req)
-    client = OpenAI(api_key=api_key)
+def build_script_prompt(req: ScriptRequest) -> tuple[str, dict]:
     system = """Você é um roteirista profissional de YouTube em português brasileiro.
-Crie conteúdo original, falável e específico. Não invente estatísticas, fontes, resultados,
-citações ou experiências. Se faltarem dados, sinalize a lacuna.
-Entregue JSON válido com title_ideas (3 strings), hooks (5 objetos com text),
+Crie conteúdo original, falável, específico e adequado à duração solicitada.
+Não invente estatísticas, fontes, resultados, citações ou experiências. Se faltarem dados, sinalize a lacuna.
+Entregue somente JSON válido com: title_ideas (3 strings), hooks (5 objetos com text),
 winning_formula, script (lista com time, voice, visual), estimated_words,
 estimated_runtime_seconds, description, hashtags e safety_notes.
 Os hooks devem ser distintos, abrir curiosidade e indicar benefício. O roteiro deve ter começo,
-desenvolvimento e conclusão, com fala e indicação visual em cada bloco."""
+desenvolvimento e conclusão, com fala e indicação visual em cada bloco.
+Para vídeos curtos, use cenas objetivas, ritmo forte e uma CTA natural."""
     user = {"tema": req.topic, "público": req.audience, "formato": req.format,
             "duração_segundos": req.duration_seconds, "tom": req.tone, "objetivo": req.goal,
-            "perfil_de_voz": req.voice_profile or "Use português brasileiro natural.",
+            "perfil_de_voz": req.voice_profile or "Use português brasileiro natural e narração masculina.",
             "fatos_e_fontes": req.facts_sources or "Nenhum. Não invente dados."}
+    return system, user
+
+
+def parse_generated_script(raw: str, req: ScriptRequest) -> dict:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+        if not match:
+            raise ValueError("A IA não retornou um JSON válido.")
+        data = json.loads(match.group(0))
+    required = ("title_ideas", "hooks", "script")
+    if not all(isinstance(data.get(key), list) for key in required):
+        raise ValueError("A resposta da IA veio incompleta. Tente gerar novamente.")
+    for hook in data.get("hooks", []):
+        if isinstance(hook, dict):
+            hook.update(score_hook(hook.get("text", "")))
+    data["estimated_words"] = data.get("estimated_words") or sum(
+        word_count(x.get("voice", "")) for x in data.get("script", []) if isinstance(x, dict))
+    data["estimated_runtime_seconds"] = req.duration_seconds
+    data.setdefault("description", f"Neste vídeo, você vai entender: {req.topic}.")
+    data.setdefault("hashtags", ["#YouTube", "#Shorts"])
+    data.setdefault("safety_notes", ["Revise informações factuais antes de publicar."])
+    return data
+
+
+def generate_with_gemini(req: ScriptRequest) -> dict:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY não configurada.")
+    system, user = build_script_prompt(req)
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    try:
+        response = httpx.post(
+            url,
+            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+            json={
+                "systemInstruction": {"parts": [{"text": system}]},
+                "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
+                "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75}
+            },
+            timeout=90.0
+        )
+        if response.status_code >= 400:
+            detail = "Gemini recusou a solicitação. Confira a chave, o modelo e os limites da API."
+            try:
+                detail += " " + response.json().get("error", {}).get("message", "")[:300]
+            except Exception:
+                pass
+            raise RuntimeError(detail)
+        payload = response.json()
+        candidates = payload.get("candidates") or []
+        parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+        raw = "".join(part.get("text", "") for part in parts)
+        if not raw:
+            raise RuntimeError("Gemini não retornou conteúdo. Verifique os limites ou tente novamente.")
+        return parse_generated_script(raw, req)
+    except httpx.TimeoutException:
+        raise RuntimeError("Tempo limite ao consultar o Gemini. Tente novamente.")
+    except httpx.HTTPError:
+        raise RuntimeError("Falha de comunicação com a API Gemini.")
+
+
+def generate_with_openai(req: ScriptRequest) -> dict:
+    if OpenAI is None:
+        raise RuntimeError("Pacote openai não instalado.")
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return fallback_script(req)
+    system, user = build_script_prompt(req)
+    client = OpenAI(api_key=api_key)
     try:
         response = client.responses.create(
             model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
@@ -108,14 +175,18 @@ desenvolvimento e conclusão, com fala e indicação visual em cada bloco."""
                    {"role": "user", "content": json.dumps(user, ensure_ascii=False)}],
             text={"format": {"type": "json_object"}}
         )
-        data = json.loads(response.output_text)
+        return parse_generated_script(response.output_text, req)
     except Exception as exc:
-        raise HTTPException(502, f"Falha na geração OpenAI: {str(exc)}")
-    for hook in data.get("hooks", []):
-        hook.update(score_hook(hook.get("text", "")))
-    data["estimated_words"] = data.get("estimated_words") or sum(word_count(x.get("voice", "")) for x in data.get("script", []))
-    data["estimated_runtime_seconds"] = req.duration_seconds
-    return data
+        raise RuntimeError(f"Falha na geração OpenAI: {str(exc)[:300]}")
+
+
+def generate_script(req: ScriptRequest) -> tuple[dict, str]:
+    # Gemini é o provedor principal; OpenAI fica como alternativa quando não há chave Gemini.
+    if os.getenv("GEMINI_API_KEY"):
+        return generate_with_gemini(req), "gemini"
+    if os.getenv("OPENAI_API_KEY"):
+        return generate_with_openai(req), "openai"
+    return fallback_script(req), "demo"
 
 @app.get("/")
 def home():
@@ -123,7 +194,7 @@ def home():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "agents": len(AGENTS)}
+    return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if os.getenv("GEMINI_API_KEY") else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
 
 @app.get("/api/agents")
 def agents():
@@ -131,8 +202,11 @@ def agents():
 
 @app.post("/api/script")
 def create_script(req: ScriptRequest):
-    result = generate_with_openai(req)
-    result["engine"] = "openai" if os.getenv("OPENAI_API_KEY") else "demo"
+    try:
+        result, engine = generate_script(req)
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc))
+    result["engine"] = engine
     return result
 
 class VoiceRequest(BaseModel):
