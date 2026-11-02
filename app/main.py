@@ -261,7 +261,7 @@ def generate_script(req: ScriptRequest) -> tuple[dict, str]:
 def home():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
-@app.get("/api/health")
+@app.get("/sleep-studio")\ndef sleep_studio():\n    return FileResponse(BASE_DIR / "static" / "sleep-studio.html")\n\n@app.get("/api/health")
 def health():
     return {"ok": True, "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY")), "script_provider": "gemini" if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")) else ("openai" if os.getenv("OPENAI_API_KEY") else "demo"), "agents": len(AGENTS)}
 
