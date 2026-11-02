@@ -164,4 +164,4 @@ document.querySelector('#renderBrowserButton').addEventListener('click',async()=
 
 async function checkVoiceStatus(){try{const r=await fetch('/api/voice/status');const d=await r.json();const el=document.querySelector('#voiceStatus');if(d.provider==='fish_audio')el.textContent='Fish Audio conectado · voz padrão '+(d.default_voice_configured?'configurada':'não configurada')+'.';else el.textContent='Provedor de voz: '+(d.provider||'não configurado')+'.';}catch(e){}}
 loadAgents();checkVoiceStatus();
-</script><script type="module" src="/static/browser-render.js"></script></body></html>
+</script><script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1","remotion":"https://esm.sh/remotion@4.0.539?external=react","@remotion/web-renderer":"https://esm.sh/@remotion/web-renderer@4.0.539?external=react,remotion"}}</script><script type="module" src="/static/browser-render.js"></script></body></html>
