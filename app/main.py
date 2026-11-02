@@ -130,75 +130,87 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY não configurada.")
     system, user = build_script_prompt(req)
-    # Compatibilidade: contas novas não têm acesso ao Gemini 2.5 Flash.
-    # Se a Vercel ainda tiver GEMINI_MODEL configurada com o modelo antigo,
-    # atualizamos automaticamente para o modelo estável recomendado.
-    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip().removeprefix("models/")
-    if not model or "gemini-2.5-flash" in model or "gemini-2.0-flash" in model:
-        model = "gemini-3.8-flash"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    try:
-        payload = {
-            "systemInstruction": {"parts": [{"text": system}]},
-            "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
-            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75, "maxOutputTokens": 8192}
-        }
-        response = None
-        # Duas tentativas para falhas transitórias; o limite total fica abaixo
-        # do tempo máximo configurado para a função na Vercel.
-        for attempt in range(2):
+    primary = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip().removeprefix("models/")
+    if not primary or "gemini-2.5-flash" in primary or "gemini-2.0-flash" in primary:
+        primary = "gemini-3.8-flash"
+    # Modelo secundário estável para indisponibilidade/capacidade do principal.
+    fallback = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash").strip().removeprefix("models/")
+    models = [primary] + ([fallback] if fallback and fallback != primary else [])
+    request_payload = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": json.dumps(user, ensure_ascii=False)}]}],
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.75, "maxOutputTokens": 8192}
+    }
+    last_error = None
+    for model_index, model in enumerate(models):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        attempts = 2 if model_index == 0 else 1
+        for attempt in range(attempts):
             try:
                 response = httpx.post(
                     url,
                     headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                    json=payload,
-                    timeout=httpx.Timeout(110.0, connect=15.0)
+                    json=request_payload,
+                    timeout=httpx.Timeout(75.0, connect=15.0)
                 )
-            except httpx.TimeoutException:
-                logger.warning("Gemini timeout on attempt %s/2", attempt + 1)
-                if attempt == 0:
+                if response.status_code in (429, 500, 502, 503, 504):
+                    try:
+                        api_message = response.json().get("error", {}).get("message", "")
+                    except Exception:
+                        api_message = ""
+                    last_error = f"HTTP {response.status_code}: {api_message[:220]}"
+                    logger.warning("Gemini model=%s returned HTTP %s (attempt %s/%s)",
+                                   model, response.status_code, attempt + 1, attempts)
+                    if attempt + 1 < attempts:
+                        time.sleep(2)
+                        continue
+                    break
+                if response.status_code >= 400:
+                    try:
+                        api_message = response.json().get("error", {}).get("message", "")
+                    except Exception:
+                        api_message = ""
+                    if response.status_code in (401, 403):
+                        raise RuntimeError("A chave Gemini foi recusada. Confira GEMINI_API_KEY nas variáveis da Vercel.")
+                    raise RuntimeError(f"Gemini recusou a solicitação (HTTP {response.status_code}). {api_message[:220]}")
+                data = response.json()
+                candidates = data.get("candidates") or []
+                finish_reason = candidates[0].get("finishReason", "no_candidate") if candidates else "no_candidate"
+                parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+                raw = "".join(part.get("text", "") for part in parts)
+                logger.info("Gemini response received: model=%s candidates=%s finish_reason=%s text_chars=%s",
+                            model, len(candidates), finish_reason, len(raw))
+                if not raw:
+                    feedback = data.get("promptFeedback", {})
+                    block_reason = feedback.get("blockReason", "sem conteúdo")
+                    raise RuntimeError(f"Gemini respondeu sem texto (motivo: {block_reason}; finalização: {finish_reason}).")
+                try:
+                    result = parse_generated_script(raw, req)
+                    result["engine"] = f"gemini:{model}"
+                    return result
+                except (ValueError, json.JSONDecodeError) as exc:
+                    logger.exception("Gemini returned invalid script JSON: %s", str(exc)[:300])
+                    raise RuntimeError("O Gemini respondeu, mas o roteiro veio em formato inválido. Tente novamente.") from exc
+            except httpx.TimeoutException as exc:
+                last_error = "tempo limite"
+                logger.warning("Gemini timeout: model=%s attempt=%s/%s", model, attempt + 1, attempts)
+                if attempt + 1 < attempts:
                     time.sleep(2)
                     continue
-                raise
-            if response.status_code not in (500, 502, 503, 504) or attempt == 1:
                 break
-            logger.warning("Gemini transient HTTP %s on attempt %s/2", response.status_code, attempt + 1)
-            time.sleep(2)
-            time.sleep(1.5)
-        if response.status_code >= 400:
-            try:
-                api_message = response.json().get("error", {}).get("message", "")
-            except Exception:
-                api_message = ""
-            if response.status_code in (401, 403):
-                raise RuntimeError("A chave Gemini foi recusada. Confira GEMINI_API_KEY nas variáveis da Vercel.")
-            if response.status_code == 429:
-                raise RuntimeError("O limite ou a cota da API Gemini foi atingido. Confira o faturamento e os limites no Google AI Studio. " + api_message[:220])
-            if response.status_code in (500, 502, 503, 504):
-                raise RuntimeError("O Gemini está temporariamente indisponível. Tente novamente em alguns instantes. " + api_message[:220])
-            raise RuntimeError("Gemini recusou a solicitação. Confira o modelo e os parâmetros enviados. " + api_message[:220])
-        payload = response.json()
-        candidates = payload.get("candidates") or []
-        finish_reason = candidates[0].get("finishReason", "no_candidate") if candidates else "no_candidate"
-        parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
-        raw = "".join(part.get("text", "") for part in parts)
-        logger.info("Gemini response received: model=%s candidates=%s finish_reason=%s text_chars=%s",
-                    model, len(candidates), finish_reason, len(raw))
-        if not raw:
-            prompt_feedback = payload.get("promptFeedback", {})
-            block_reason = prompt_feedback.get("blockReason", "sem conteúdo")
-            raise RuntimeError(f"Gemini respondeu sem texto (motivo: {block_reason}; finalização: {finish_reason}).")
-        try:
-            return parse_generated_script(raw, req)
-        except (ValueError, json.JSONDecodeError) as exc:
-            logger.exception("Gemini returned invalid script JSON: %s", str(exc)[:300])
-            demo = fallback_script(req)
-            demo["safety_notes"].insert(0, "O Gemini respondeu, mas o formato veio inválido. Este resultado é demonstrativo; tente gerar novamente.")
-            return demo
-    except httpx.TimeoutException:
-        raise RuntimeError("Tempo limite ao consultar o Gemini. Tente novamente.")
-    except httpx.HTTPError:
-        raise RuntimeError("Falha de comunicação com a API Gemini.")
+            except httpx.HTTPError as exc:
+                last_error = str(exc)[:220]
+                logger.warning("Gemini transport error: model=%s error=%s", model, last_error)
+                break
+    if len(models) > 1:
+        raise RuntimeError(
+            f"Gemini principal e modelo reserva estão temporariamente indisponíveis. "
+            f"Modelos consultados: {', '.join(models)}. Último retorno: {last_error or 'sem resposta'}. "
+            "Tente novamente em instantes."
+        )
+    if last_error and "HTTP 429" in last_error:
+        raise RuntimeError("O limite ou a cota da API Gemini foi atingido. Confira os limites no Google AI Studio. " + last_error)
+    raise RuntimeError("O Gemini está temporariamente indisponível. " + (last_error or "Tente novamente em instantes."))
 
 
 def generate_with_openai(req: ScriptRequest) -> dict:
