@@ -50,7 +50,8 @@ window.renderStudioVideo=async function({props,onProgress}) {
   if (!support) throw new Error("Este navegador não suporta a codificação MP4 necessária.");
   const fps=30,scenes=props.scenes||[];
   const seconds=scenes.reduce((sum,s)=>sum+Math.max(1,Number(s.durationSeconds)||8),0);
-  const composition={id:"YouTubeVideoBrowser",component:Video,durationInFrames:Math.max(1,Math.ceil(seconds*fps)),fps,width:1920,height:1080,defaultProps:props};
-  const result=await renderMediaOnWeb({composition,inputProps:props,container:"mp4",videoCodec:"h264",videoBitrate:"high",pageResponsiveness:"high",onProgress});
+  const composition={id:"YouTubeVideoBrowser",component:Video,durationInFrames:Math.max(1,Math.ceil(seconds*fps)),fps,width:1280,height:720,defaultProps:props};
+  const result=await renderMediaOnWeb({composition,inputProps:props,container:"mp4",videoCodec:"h264",videoBitrate:"medium",pageResponsiveness:"high",onProgress});
   return await result.getBlob();
 };
+\nwindow.dispatchEvent(new Event("studio-renderer-ready"));\n
