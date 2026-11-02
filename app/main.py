@@ -127,7 +127,12 @@ def generate_with_gemini(req: ScriptRequest) -> dict:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY não configurada.")
     system, user = build_script_prompt(req)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+    # Compatibilidade: contas novas não têm acesso ao Gemini 2.5 Flash.
+    # Se a Vercel ainda tiver GEMINI_MODEL configurada com o modelo antigo,
+    # atualizamos automaticamente para o modelo estável recomendado.
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
+    if model in {"gemini-2.5-flash", "models/gemini-2.5-flash"}:
+        model = "gemini-3.8-flash"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     try:
         response = httpx.post(
