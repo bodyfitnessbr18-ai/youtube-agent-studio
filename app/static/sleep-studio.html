@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sleep Video Studio · YouTube Agent Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#081225;--panel:#111e36;--line:#293d61;--muted:#a5b5d0;--blue:#83aaff;--gold:#e4c58a;--green:#62d6a5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% 0%,#17366c 0,#081225 58%);font:15px system-ui;color:#eef4ff}
+main{max-width:1160px;margin:auto;padding:26px 18px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:clamp(25px,4vw,38px);margin:0}.muted,small{color:var(--muted)}.pill{border:1px solid #526d9b;padding:7px 12px;border-radius:30px;color:#c6d9ff}
+a{color:var(--blue);text-decoration:none}.grid{display:grid;grid-template-columns: minmax(280px,370px) 1fr;gap:18px}.panel{background:#111e36eF;border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+h2{font-size:18px;margin:0 0 12px}label{display:block;margin:12px 0 6px;color:#c7d5eb}input,select,textarea{width:100%;background:#09152b;border:1px solid var(--line);border-radius:9px;padding:11px;color:#fff;font:inherit}textarea{min-height:100px;resize:vertical}
+button{border:0;border-radius:10px;padding:11px 15px;background:var(--blue);color:#071225;font-weight:750;cursor:pointer}button.secondary{background:#243a60;color:#eaf1ff;border:1px solid #47618c}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:145px}
+.hero{height:180px;border-radius:14px;margin:0 0 16px;background:linear-gradient(180deg,#081b4c 0%,#164a93 58%,#0b2853 100%);position:relative;overflow:hidden;border:1px solid #496ba6}
+.moon{position:absolute;width:68px;height:68px;border-radius:50%;background:#f6edcc;right:23%;top:20px;box-shadow:0 0 38px #e9e6ce}.sea{position:absolute;left:0;right:0;bottom:0;height:65px;background:repeating-linear-gradient(176deg,#5d9fe4 0 2px,#1c4b85 3px 9px);opacity:.72}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0}.stat{padding:12px;background:#0b172d;border:1px solid var(--line);border-radius:10px}.stat b{display:block;font-size:17px}.stat small{font-size:12px}
+.progress{margin:10px 0;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0a162c}.step{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #203452;color:var(--muted)}.step:last-child{border:0}.dot{width:23px;height:23px;border:1px solid #5b7194;border-radius:50%;display:grid;place-items:center;font-size:12px;flex:none}.step.done{color:var(--green)}.step.done .dot{border-color:var(--green);background:#123c35}
+.scene{border:1px solid var(--line);border-radius:12px;padding:13px;margin:12px 0;background:#0b172d}.scenehead{display:flex;justify-content:space-between;gap:8px;align-items:center}.scenehead b{color:#dce8ff}.scene textarea{min-height:80px}.assetrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.note{font-size:12px;color:var(--muted);line-height:1.5}.warning{border-left:3px solid var(--gold);padding:10px 12px;background:#342b1d55;border-radius:5px;color:#ead8b5;margin-top:12px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.statrow{grid-template-columns:1fr 1fr}.assetrow{grid-template-columns:1fr}}
+</style></head><body><main>
+<div class="top"><div><h1>🌙 Sleep Video Studio</h1><div class="muted">Fábrica de vídeos relaxantes · dentro do YouTube Agent Studio</div></div><div class="pill">Módulo de produção</div><a href="/">← Voltar ao Agent Studio</a></div>
+<div class="hero"><div class="moon"></div><div class="sea"></div></div>
+<div class="grid">
+<section class="panel"><h2>Configuração do vídeo</h2>
+<label>Tema</label><input id="theme" value="Noite de lua cheia e mar tranquilo">
+<label>Duração final</label><select id="duration"><option value="1800">30 minutos</option><option value="3600" selected>60 minutos</option><option value="10800">3 horas</option><option value="28800">8 horas</option></select>
+<label>Estilo musical</label><select id="music"><option value="Piano suave + ondas tranquilas do mar" selected>Piano + ondas do mar</option><option value="Chuva suave + piano delicado">Chuva + piano</option><option value="Som ambiente de natureza sem instrumentos">Natureza sem instrumentos</option><option value="Ondas do mar sem música">Som do mar</option></select>
+<label>Quantidade de cenas</label><select id="sceneCount"><option>3</option><option selected>6</option><option>10</option></select>
+<label>Formato</label><select id="format"><option value="16:9 — 1920x1080 — YouTube" selected>16:9 — YouTube</option></select>
+<div class="actions"><button id="build">Montar prompts e cenas</button><button class="secondary" id="reset">Restaurar padrão</button></div>
+<div class="statrow"><div class="stat"><b id="statDuration">60 min</b><small>Duração</small></div><div class="stat"><b id="statScenes">6</b><small>Cenas</small></div><div class="stat"><b>16:9</b><small>Formato</small></div></div>
+<div class="warning">A montagem dos prompts e do projeto funciona aqui. A geração real de áudio e imagens ainda depende da conexão dos provedores de IA; esta tela não vai fingir que arquivos foram gerados.</div>
+</section>
+<section class="panel"><h2>Esteira de produção</h2><p class="muted">Acompanhe cada etapa e informe os arquivos gerados antes de exportar o projeto Remotion.</p>
+<div class="progress" id="progress">
+<div class="step done" data-step="0"><span class="dot">✓</span> Configuração do projeto</div>
+<div class="step" data-step="1"><span class="dot">2</span> Prompts de música e imagens</div>
+<div class="step" data-step="2"><span class="dot">3</span> Gerar 6 imagens e animações</div>
+<div class="step" data-step="3"><span class="dot">4</span> Gerar trilha sonora de 60 minutos</div>
+<div class="step" data-step="4"><span class="dot">5</span> Montar timeline no Remotion</div>
+<div class="step" data-step="5"><span class="dot">6</span> Renderizar MP4 1920×1080</div>
+</div>
+<div class="actions"><button class="secondary" id="markAssets">Marcar imagens/áudio como adicionados</button><button class="secondary" id="markRender">Marcar render como concluído</button></div>
+<div class="note" id="stageNote">Comece montando os prompts. As etapas manuais só serão marcadas quando você confirmar os arquivos.</div>
+</section>
+</div>
+<section class="panel" style="margin-top:18px"><h2>Prompt da música</h2><textarea id="musicPrompt" readonly placeholder="Clique em Montar prompts e cenas..."></textarea>
+<div class="actions"><button class="secondary" id="copyMusic">Copiar prompt da música</button></div></section>
+<section class="panel" style="margin-top:18px"><h2>Seis cenas cinematográficas</h2><p class="muted">Cada cena ocupa 10 minutos no vídeo de 60 minutos. As animações devem ser lentas, sem cortes bruscos.</p><div id="scenes"><p class="muted">Clique em “Montar prompts e cenas” para preparar o projeto.</p></div>
+<div class="actions"><button id="downloadPrompts" class="secondary" disabled>Baixar pacote de prompts (.txt)</button><button id="downloadProps" disabled>Exportar projeto Remotion (.json)</button></div>
+<p class="note">Coloque os arquivos de imagem e a trilha sonora dentro de <code>remotion/public/</code>. Informe os caminhos relativos abaixo antes de exportar o JSON. Exemplo: <code>/moonlight-scene-1.jpg</code> e <code>/moonlight-ocean.mp3</code>.</p>
+<label>Arquivo de áudio (caminho em remotion/public)</label><input id="musicSrc" placeholder="/moonlight-ocean.mp3">
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s);let project=null;let assetsReady=false,renderReady=false;
+const sceneIdeas=[
+["A varanda sob a lua","Wide moonlit Mediterranean terrace overlooking a calm ocean, elegant white sofa, warm lanterns, deep sapphire night sky."],
+["Reflexo prateado no oceano","Wide peaceful ocean at midnight, enormous full moon and silver reflection on gentle water, distant dark cliffs."],
+["Ondas suaves na areia","Quiet secluded beach at night, tiny waves washing onto pale sand, full moonlight, soft clouds."],
+["Jardim iluminado pela lua","Lush seaside garden with delicate flowers and trees moving gently in the night breeze, ocean beyond."],
+["Vista distante das montanhas","Distant coastal mountains silhouetted beneath a luminous full moon, calm dark-blue sea and faint stars."],
+["A varanda antes do amanhecer","Return to the cozy oceanfront terrace, moonlight fading subtly toward a peaceful deep-blue pre-dawn horizon."]
+];
+function makeProject(){
+ const theme=$('#theme').value.trim()||'Noite de lua cheia e mar tranquilo',duration=Number($('#duration').value),count=Number($('#sceneCount').value),music=$('#music').value;
+ const minutes=duration/60,perScene=duration/count;
+ const musicPrompt='Create a '+minutes+'-minute seamless sleep ambient instrumental inspired by: '+theme+'. Sound palette: '+music+'. Very slow 50–55 BPM, delicate sparse piano notes, soft warm ambient pads, gentle natural ocean waves, distant sea breeze, no vocals, no drums, no percussion, no sudden changes, no dramatic transitions, no sharp high frequencies. Keep the dynamics extremely even and soothing. Create a seamless loop or a continuous long-form composition suitable for deep sleep. Stereo, high-quality, warm reverb, peaceful cinematic nighttime atmosphere.';
+ const scenes=sceneIdeas.slice(0,count).map((idea,i)=>({
+  title:idea[0],durationSeconds:perScene,
+  imagePrompt:'Cinematic photorealistic 16:9 wide establishing shot for a premium sleep video. Theme: '+theme+'. Scene: '+idea[1]+' Maintain visual continuity with the same moonlit coastal location, deep sapphire and midnight-blue palette, subtle silver moonlight, warm golden practical lights only where appropriate. Static wide composition, ultra detailed, natural realistic lighting, no people, no text, no logos, no watermark.',
+  animationPrompt:'Animate this exact still image into a seamless, extremely slow ambient sleep-video shot. Preserve the original composition and all objects. Only subtle natural motion: gentle ocean waves and moving moon reflection, very slow drifting clouds, barely perceptible leaves moving in a soft sea breeze, candle or lantern flame flicker if visible. Locked camera, no zoom, no pan, no cuts, no morphing, no new objects, no flicker, no sudden motion. Calm continuous 10-minute atmosphere.',
+  imageSrc:''
+ }));
+ project={title:'Moonlight Ocean Dreams',theme,durationSeconds:duration,fps:30,width:1920,height:1080,format:'16:9',musicStyle:music,musicPrompt,scenes,musicSrc:'',audioLoop:true};
+ $('#musicPrompt').value=musicPrompt;
+ $('#scenes').innerHTML=scenes.map((s,i)=>'<div class="scene"><div class="scenehead"><b>Cena '+(i+1)+' · '+s.title+'</b><span class="muted">'+Math.round(s.durationSeconds/60)+' min</span></div><label>Prompt da imagem</label><textarea readonly>'+s.imagePrompt+'</textarea><div class="actions"><button class="secondary" data-copy="image" data-i="'+i+'">Copiar imagem</button></div><label>Prompt de animação</label><textarea readonly>'+s.animationPrompt+'</textarea><div class="actions"><button class="secondary" data-copy="animation" data-i="'+i+'">Copiar animação</button></div><label>Arquivo da imagem (remotion/public)</label><input data-image="'+i+'" placeholder="/moonlight-scene-'+(i+1)+'.jpg"></div>').join('');
+ $('#statDuration').textContent=minutes+' min';$('#statScenes').textContent=count;$('#downloadPrompts').disabled=false;$('#downloadProps').disabled=false;
+ projectReady();updateProgress();
+}
+function projectReady(){assetsReady=false;renderReady=false;$('#stageNote').textContent='Prompts preparados. Gere os arquivos nos provedores escolhidos e depois informe os caminhos dos arquivos.'}
+function updateProgress(){
+ const steps=document.querySelectorAll('.step');const states=[true,!!project,assetsReady,assetsReady,assetsReady,renderReady];
+ steps.forEach((el,i)=>{el.classList.toggle('done',states[i]);el.querySelector('.dot').textContent=states[i]?'✓':String(i+1)});
+}
+$('#build').onclick=makeProject;
+$('#reset').onclick=()=>{$('#theme').value='Noite de lua cheia e mar tranquilo';$('#duration').value='3600';$('#music').selectedIndex=0;$('#sceneCount').value='6';$('#format').selectedIndex=0;makeProject()};
+$('#scenes').addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b||!project)return;const s=project.scenes[Number(b.dataset.i)];navigator.clipboard.writeText(b.dataset.copy==='image'?s.imagePrompt:s.animationPrompt).then(()=>b.textContent='Copiado ✓').catch(()=>b.textContent='Não foi possível copiar')});
+document.querySelectorAll('#copyMusic').forEach(b=>b.onclick=()=>navigator.clipboard.writeText($('#musicPrompt').value).then(()=>b.textContent='Copiado ✓'));
+$('#musicSrc').addEventListener('input',e=>{if(project)project.musicSrc=e.target.value.trim()});
+$('#scenes').addEventListener('input',e=>{const i=Number(e.target.dataset.image);if(project&&Number.isInteger(i)&&project.scenes[i])project.scenes[i].imageSrc=e.target.value.trim()});
+$('#markAssets').onclick=()=>{if(!project){$('#stageNote').textContent='Monte os prompts primeiro.';return}const imgs=project.scenes.every(s=>s.imageSrc);const audio=$('#musicSrc').value.trim();if(!imgs||!audio){$('#stageNote').textContent='Informe o caminho de todas as imagens e do áudio antes de confirmar.';return}project.musicSrc=audio;assetsReady=true;updateProgress();$('#stageNote').textContent='Arquivos informados. O projeto Remotion poderá referenciá-los no render.'};
+$('#markRender').onclick=()=>{if(!assetsReady){$('#stageNote').textContent='Adicione primeiro as imagens e o áudio.';return}renderReady=true;updateProgress();$('#stageNote').textContent='Você confirmou que a renderização terminou. Verifique o MP4 na pasta de saída.'};
+function download(name,content,type){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),30000)}
+$('#downloadPrompts').onclick=()=>{if(!project)return;const out=['MÚSICA\n'+project.musicPrompt,...project.scenes.flatMap((s,i)=>['\nCENA '+(i+1)+' — '+s.title+'\nIMAGEM\n'+s.imagePrompt+'\nANIMAÇÃO\n'+s.animationPrompt])].join('\n');download('moonlight-ocean-prompts.txt',out,'text/plain;charset=utf-8')};
+$('#downloadProps').onclick=()=>{if(!project)return;project.musicSrc=$('#musicSrc').value.trim();project.scenes.forEach((s,i)=>{const el=document.querySelector('[data-image="'+i+'"]');s.imageSrc=el?.value.trim()||''});if(!project.musicSrc||project.scenes.some(s=>!s.imageSrc)){alert('Informe o arquivo de áudio e os caminhos das '+project.scenes.length+' imagens antes de exportar.');return}download('sleep-props.json',JSON.stringify(project,null,2),'application/json')};
+makeProject();
+</script></body></html>
