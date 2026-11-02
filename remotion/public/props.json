@@ -1,0 +1,55 @@
+{
+  "title": "Por que seu salário desaparece antes do fim do mês?",
+  "scenes": [
+    {
+      "heading": "SEU SALÁRIO SUMIU DE NOVO?",
+      "narration": "O pagamento caiu. Você respirou aliviado. Mas os dias passaram, as contas chegaram e, antes do fim do mês, parece que o dinheiro evaporou.",
+      "accent": "O problema pode estar nos pequenos vazamentos.",
+      "visual": "Sticky Man olha a carteira vazia, assustado."
+    },
+    {
+      "heading": "O DINHEIRO TEM UM DESTINO",
+      "narration": "Aluguel, água, luz, mercado, transporte. Antes mesmo de comprar qualquer coisa por vontade própria, boa parte da renda já tem destino certo.",
+      "accent": "Primeiro, descubra quanto já está comprometido.",
+      "visual": "Contas aparecem ao redor do personagem."
+    },
+    {
+      "heading": "OS PEQUENOS GASTOS SE ESCONDEM",
+      "narration": "Um lanche aqui, uma entrega ali, uma assinatura esquecida. Cada gasto parece pequeno sozinho. O perigo aparece quando todos se juntam.",
+      "accent": "Pequenos valores também merecem atenção.",
+      "visual": "Moedas escapam de pequenos furos no bolso."
+    },
+    {
+      "heading": "FAÇA UM RAIO-X DE 7 DIAS",
+      "narration": "Durante uma semana, anote absolutamente tudo o que sair da sua carteira ou da sua conta. Não confie apenas na memória. Registre na hora.",
+      "accent": "Anotar é o primeiro passo para enxergar.",
+      "visual": "Sticky Man registra compras em um caderno."
+    },
+    {
+      "heading": "SEPARE EM TRÊS GRUPOS",
+      "narration": "Depois, organize os gastos em três grupos: essenciais, importantes e dispensáveis. Não é para sentir culpa. É para entender onde existe espaço para decidir melhor.",
+      "accent": "Clareza antes de cortar.",
+      "visual": "Três caixas recebem moedas e etiquetas."
+    },
+    {
+      "heading": "DÊ UMA TAREFA A CADA REAL",
+      "narration": "Quando receber, planeje primeiro as contas essenciais. Depois defina limites realistas para alimentação, transporte e lazer. Se puder, reserve uma pequena quantia para imprevistos.",
+      "accent": "Planejar antes de gastar muda o jogo.",
+      "visual": "Moedas são distribuídas em envelopes."
+    },
+    {
+      "heading": "CUIDADO COM AS PARCELINHAS",
+      "narration": "Uma prestação pequena pode parecer inofensiva. Mas várias parcelas juntas ocupam a renda dos próximos meses. Antes de assumir uma nova, some tudo o que já está comprometido.",
+      "accent": "A parcela cabe hoje? E nos próximos meses?",
+      "visual": "Parcelas empilham-se como blocos sobre o personagem."
+    },
+    {
+      "heading": "COMECE COM UMA DECISÃO",
+      "narration": "Você não precisa resolver tudo hoje. Escolha um gasto para observar nesta semana, faça seu registro e ajuste o que estiver ao seu alcance. O controle começa quando você passa a enxergar suas escolhas.",
+      "accent": "Qual gasto você vai revisar primeiro? Comente!",
+      "visual": "Sticky Man sorri segurando um plano simples."
+    }
+  ],
+  "audioSrc": "",
+  "musicSrc": ""
+}
