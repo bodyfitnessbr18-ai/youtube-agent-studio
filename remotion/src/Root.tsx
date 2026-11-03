@@ -2,6 +2,7 @@ import React from "react";
 import { Composition } from "remotion";
 import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
 import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
+import { ReflexaoBiblica, type ReflexaoBiblicaProps } from "./ReflexaoBiblica";
 
 const demo: VideoProps = {
   title: "Seu dinheiro está desaparecendo?",
@@ -24,6 +25,19 @@ const sleepDemo: SleepVideoProps = {
     durationSeconds: 600,
     imageSrc: "",
   })),
+};
+
+
+const reflexaoDemo: ReflexaoBiblicaProps = {
+  videoSrc: "",
+  headline: "Com sabedoria se edifica a casa...",
+  subtitle: "E com inteligência ela se firma.",
+  footerText: "Assim como o passarinho, edifique seu lar um dia de cada vez.",
+  reference: "PROVÉRBIOS 24:3",
+  voiceSrc: "",
+  videoMuted: true,
+  videoFit: "cover",
+  durationSeconds: 10,
 };
 
 const estimateSceneSeconds = (scene: VideoProps["scenes"][number]) =>
@@ -52,6 +66,18 @@ export const RemotionRoot: React.FC = () => (
       width={1920}
       height={1080}
       defaultProps={sleepDemo}
+      calculateMetadata={({ props }) => ({
+        durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)),
+      })}
+    />
+    <Composition
+      id="ReflexaoBiblica"
+      component={ReflexaoBiblica}
+      durationInFrames={300}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={reflexaoDemo}
       calculateMetadata={({ props }) => ({
         durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)),
       })}
