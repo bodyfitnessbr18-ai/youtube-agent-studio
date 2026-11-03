@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estúdio de Reflexão Bíblica</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121a2d;--line:#26334d;--muted:#9aabc6;--gold:#c59a52;--blue:#6da8ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0b1020,#101a30);font:15px system-ui;color:#eef4ff}
+main{max-width:1180px;margin:auto;padding:24px 16px 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:clamp(25px,4vw,36px);margin:0}.muted{color:var(--muted)}.back{color:#b9d3ff;text-decoration:none;border:1px solid var(--line);padding:9px 12px;border-radius:10px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:18px;margin:0 0 12px}label{display:block;color:#bdcbe0;margin:12px 0 6px}
+input,textarea,select{width:100%;background:#0b1325;border:1px solid var(--line);border-radius:9px;padding:11px;color:#fff;font:inherit}
+textarea{min-height:76px;resize:vertical}button{border:0;border-radius:10px;padding:12px 16px;font-weight:750;cursor:pointer;background:var(--blue);color:#071225}
+button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:160px}
+.gold{background:var(--gold);color:#201607}.status{margin-top:12px;min-height:22px;color:#b8c8df;line-height:1.45}
+.preview-wrap{position:sticky;top:14px}.preview{width:100%;aspect-ratio:9/16;background:#fff;color:#111;display:flex;flex-direction:column;overflow:hidden;border-radius:12px;box-shadow:0 16px 45px #0006}
+.preview-top{height:25%;flex-shrink:0;padding:5% 6%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:7px}
+.preview-top strong{font-size:clamp(14px,2vw,21px);line-height:1.15}.preview-top span{font-size:clamp(9px,1.2vw,13px);color:#444}
+.preview-video{height:55%;width:100%;background:#222;overflow:hidden}.preview-video video{width:100%;height:100%;object-fit:cover}
+.preview-bottom{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:5%;gap:8px}
+.preview-bottom strong{font-size:clamp(12px,1.7vw,18px);line-height:1.15}.preview-bottom small{font-weight:800;color:#a77b32;letter-spacing:1px}
+.note{font-size:12px;line-height:1.5;color:var(--muted);margin-top:10px}.check{display:flex;align-items:center;gap:8px}.check input{width:auto}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.preview-wrap{position:static;max-width:300px;margin:auto}.panel{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div><h1>✦ Reflexão Bíblica</h1><div class="muted">Sua máscara padrão: vídeo no centro, mensagem acima e reflexão abaixo.</div></div><a class="back" href="/">← Voltar ao YouTube Agent Studio</a></div>
+<div class="grid">
+<section>
+<div class="panel">
+<h2>1. Seu vídeo</h2>
+<label>Escolha o vídeo do passarinho ou outra gravação</label>
+<input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*">
+<div class="note">O vídeo é processado no próprio navegador. Para renderizar com mais estabilidade, prefira MP4 H.264.</div>
+<label class="check"><input id="videoMuted" type="checkbox" checked> Silenciar o áudio original do vídeo</label>
+<label>Enquadramento</label>
+<select id="videoFit"><option value="cover">Preencher a área (corta as bordas)</option><option value="contain">Mostrar o vídeo inteiro</option></select>
+</div>
+
+<div class="panel">
+<h2>2. Texto da máscara</h2>
+<label>Mensagem superior</label>
+<textarea id="headline">Com sabedoria se edifica a casa...</textarea>
+<label>Complemento superior</label>
+<input id="subtitle" value="E com inteligência ela se firma.">
+<label>Mensagem inferior</label>
+<textarea id="footerText">Assim como o passarinho, edifique seu lar um dia de cada vez.</textarea>
+<label>Referência bíblica</label>
+<input id="reference" value="PROVÉRBIOS 24:3">
+</div>
+
+<div class="panel">
+<h2>3. Narração (opcional)</h2>
+<label>Texto que será narrado</label>
+<textarea id="narration" placeholder="Digite a reflexão que deseja narrar. Ex.: Assim como o passarinho constrói seu ninho com paciência..."></textarea>
+<div class="actions"><button type="button" id="voiceButton" class="gold">Gerar narração MP3</button></div>
+<div id="voiceStatus" class="status">A narração é opcional. Você também pode renderizar apenas com o áudio original do vídeo.</div>
+</div>
+
+<div class="panel">
+<h2>4. Gerar o vídeo final</h2>
+<label>Duração do vídeo (segundos)</label>
+<input id="duration" type="number" min="5" max="180" value="10">
+<div class="actions"><button type="button" id="renderButton">Renderizar MP4 9:16</button></div>
+<div id="renderStatus" class="status">Selecione um vídeo para habilitar a renderização.</div>
+<div class="note">A renderização acontece nesta aba e pode exigir bastante memória. Não feche a página enquanto o MP4 estiver sendo criado.</div>
+</div>
+</section>
+
+<aside class="preview-wrap">
+<div class="panel"><h2>Prévia da máscara</h2>
+<div class="preview">
+<div class="preview-top"><strong id="previewHeadline">Com sabedoria se edifica a casa...</strong><span id="previewSubtitle">E com inteligência ela se firma.</span></div>
+<div class="preview-video"><video id="previewVideo" playsinline muted loop></video></div>
+<div class="preview-bottom"><strong id="previewFooter">Assim como o passarinho, edifique seu lar um dia de cada vez.</strong><small id="previewReference">PROVÉRBIOS 24:3</small></div>
+</div>
+<div class="note">A prévia acompanha as alterações de texto. O arquivo final será exportado em 1080 × 1920.</div>
+</div>
+</aside>
+</div>
+</main>
+<script type="importmap">{"imports":{"react":"https://esm.sh/react@18.3.1","react/jsx-runtime":"https://esm.sh/react@18.3.1/jsx-runtime","remotion":"https://esm.sh/remotion@4.0.539?external=react","@remotion/web-renderer":"https://esm.sh/@remotion/web-renderer@4.0.539?external=react,remotion"}}</script>
+<script>
+(function(){
+ const $=id=>document.getElementById(id);
+ let videoUrl="",voiceUrl="";
+ function updatePreview(){
+  $("previewHeadline").textContent=$("headline").value||" ";
+  $("previewSubtitle").textContent=$("subtitle").value||"";
+  $("previewFooter").textContent=$("footerText").value||" ";
+  $("previewReference").textContent=$("reference").value||"";
+  $("previewVideo").style.objectFit=$("videoFit").value;
+ }
+ ["headline","subtitle","footerText","reference","videoFit"].forEach(id=>$(id).addEventListener("input",updatePreview));
+ $("videoFile").addEventListener("change",()=>{
+  const file=$("videoFile").files[0];if(!file)return;
+  if(videoUrl)URL.revokeObjectURL(videoUrl);
+  videoUrl=URL.createObjectURL(file);
+  $("previewVideo").src=videoUrl;
+  $("previewVideo").load();
+  $("renderStatus").textContent="Vídeo carregado: "+file.name+" ("+(file.size/1024/1024).toFixed(1)+" MB).";
+  updatePreview();
+ });
+ $("voiceButton").addEventListener("click",async()=>{
+  const text=$("narration").value.trim(),button=$("voiceButton");
+  if(!text){$("voiceStatus").textContent="Digite o texto da narração primeiro.";return;}
+  button.disabled=true;$("voiceStatus").textContent="Gerando narração com o provedor de voz conectado...";
+  try{
+   const response=await fetch("/api/voice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+   if(!response.ok){let data={};try{data=await response.json()}catch(e){}throw new Error(data.detail||"Não foi possível gerar a narração.");}
+   const blob=await response.blob();if(voiceUrl)URL.revokeObjectURL(voiceUrl);
+   voiceUrl=URL.createObjectURL(blob);
+   $("voiceStatus").textContent="Narração pronta e adicionada ao vídeo.";
+  }catch(error){$("voiceStatus").textContent="Erro: "+error.message;}
+  finally{button.disabled=false;}
+ });
+ $("renderButton").addEventListener("click",async()=>{
+  const button=$("renderButton");
+  if(!videoUrl){$("renderStatus").textContent="Escolha um arquivo de vídeo primeiro.";return;}
+  if(!window.renderReflexaoVideo){$("renderStatus").textContent="O renderizador ainda está carregando. Aguarde alguns segundos e tente novamente.";return;}
+  const duration=Math.max(5,Math.min(180,Number($("duration").value)||10));
+  const props={
+   videoSrc:videoUrl,
+   headline:$("headline").value,
+   subtitle:$("subtitle").value,
+   footerText:$("footerText").value,
+   reference:$("reference").value,
+   voiceSrc:voiceUrl||"",
+   videoMuted:$("videoMuted").checked,
+   videoFit:$("videoFit").value,
+   durationSeconds:duration
+  };
+  button.disabled=true;$("renderStatus").textContent="Preparando a renderização...";
+  try{
+   const blob=await window.renderReflexaoVideo({props,onProgress:p=>{
+    $("renderStatus").textContent="Renderizando "+Math.round((p.progress||0)*100)+"% · "+(p.encodedFrames||0)+" quadros.";
+   }});
+   const url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download="reflexao-biblica.mp4";a.click();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   $("renderStatus").textContent="Vídeo MP4 criado com sucesso ("+(blob.size/1024/1024).toFixed(1)+" MB).";
+  }catch(error){$("renderStatus").textContent="Falha na renderização: "+(error&&error.message?error.message:String(error));}
+  finally{button.disabled=false;}
+ });
+ updatePreview();
+})();
+</script>
+<script type="module" src="/static/reflexao-render.js?v=20261103a"></script>
+</body>
+</html>
