@@ -7,7 +7,8 @@
     "render:sample": "remotion render src/index.ts YouTubeVideo out/sample.mp4",
     "still": "remotion still src/index.ts YouTubeVideo out/thumbnail.png",
     "render:project": "remotion render src/index.ts YouTubeVideo out/youtube-video.mp4 --props-file=public/props.json",
-    "render:sleep": "remotion render src/index.ts SleepVideo out/moonlight-ocean-dreams.mp4 --props-file=public/sleep-props.json"
+    "render:sleep": "remotion render src/index.ts SleepVideo out/moonlight-ocean-dreams.mp4 --props-file=public/sleep-props.json",
+    "render:reflexao": "remotion render src/index.ts ReflexaoBiblica out/reflexao-biblica.mp4 --props-file=public/reflexao-props.json"
   },
   "dependencies": {
     "@remotion/cli": "4.0.539",

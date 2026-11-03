@@ -261,6 +261,10 @@ def generate_script(req: ScriptRequest) -> tuple[dict, str]:
 def home():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
+@app.get("/reflexao-studio")
+def reflexao_studio():
+    return FileResponse(BASE_DIR / "static" / "reflexao-studio.html")
+
 @app.get("/sleep-studio")
 def sleep_studio():
     return FileResponse(BASE_DIR / "static" / "sleep-studio.html")
