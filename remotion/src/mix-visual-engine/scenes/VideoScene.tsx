@@ -14,7 +14,7 @@ export const VideoScene: React.FC<{ scene: MixScene; accent?: string }> = ({ sce
       <OffthreadVideo
         src={src}
         startFrom={scene.videoStartFrame ?? 0}
-        volume={0}
+        volume={scene.videoVolume ?? 0}
         style={{ width: "100%", height: "100%", objectFit: scene.videoFit ?? "cover" }}
       />
       <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55) 0%, transparent 32%, transparent 58%, rgba(0,0,0,.72) 100%)" }} />
