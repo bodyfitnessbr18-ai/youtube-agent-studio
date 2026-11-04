@@ -9,9 +9,9 @@
     "render:project": "remotion render src/index.ts YouTubeVideo out/youtube-video.mp4 --props-file=public/props.json",
     "render:sleep": "remotion render src/index.ts SleepVideo out/moonlight-ocean-dreams.mp4 --props-file=public/sleep-props.json",
     "render:reflexao": "remotion render src/index.ts ReflexaoBiblica out/reflexao-biblica.mp4 --props-file=public/reflexao-props.json",
-    "render:mix-demo": "remotion render src/index.ts MixEngineVertical out/mix-visual-engine-demo.mp4",
-    "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4",
-    "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4",
+    "render:mix-demo": "remotion render src/index.ts MixEngineVertical out/mix-visual-engine-demo.mp4 --gl=swangle",
+    "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4 --gl=swangle",
+    "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4 --gl=swangle",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
