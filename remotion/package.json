@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "voice-studio": "node scripts/fish-voice-studio.mjs",
     "mix-studio": "node scripts/mix-project-studio.mjs",
-    "video-ai-studio": "node scripts/gemini-omni-video-studio.mjs"
+    "video-ai-studio": "node scripts/gemini-omni-video-studio.mjs",
+    "production-studio": "node scripts/central-production-studio.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "8.18.0",
