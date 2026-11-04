@@ -70,4 +70,4 @@ Type-check the project:
 npm run typecheck
 ```
 
-The engine uses `@remotion/three`, React Three Fiber and Three.js for the isometric scene. The first product, storybook and traffic scenes are visual foundations; production assets, advanced camera paths, timed subtitles, procedural sound/music and render QA are the next development phase. See `src/mix-visual-engine/README.md`.
+The engine uses `@remotion/three`, React Three Fiber and Three.js for the isometric scene. The CLI presets use `--gl=swangle` for software WebGL in CPU-only cloud environments; desktop GPU rendering can use `angle`. The first product, storybook and traffic scenes are visual foundations; production assets, advanced camera paths, timed subtitles, procedural sound/music and render QA are the next development phase. See `src/mix-visual-engine/README.md`.
