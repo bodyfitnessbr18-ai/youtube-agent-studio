@@ -16,6 +16,8 @@ export type MixScene = {
   /** Source video offset in frames, at the composition FPS. */
   videoStartFrame?: number;
   videoFit?: "cover" | "contain";
+  /** Original clip audio level from 0 to 1. */
+  videoVolume?: number;
 };
 
 export type MixVisualEngineProps = {
