@@ -40,22 +40,23 @@ const reflexaoDemo: ReflexaoBiblicaProps = {
   durationSeconds: 10,
 };
 
-const mixDemo: MixVisualEngineProps = {
-  title: "Mix Visual Engine",
-  brandName: "MIX STUDIO",
-  accent: "#e6b86b",
+const shakerAd: MixVisualEngineProps = {
+  title: "COQUETELEIRA SHAKER GO 600 ML",
+  brandName: "MIX",
+  accent: "#f47a20",
   showCaptions: true,
   musicVolume: 0.14,
   scenes: [
-    { id: "opening", kind: "editorial", durationInFrames: 90, title: "IDEIAS QUE GANHAM VIDA", subtitle: "Um motor visual. Muitos universos.", narration: "Uma única plataforma para transformar ideias em vídeos." },
-    { id: "product", kind: "product", durationInFrames: 120, title: "ANÚNCIOS DE PRODUTOS", subtitle: "Apresentações com presença visual.", narration: "Do detalhe à apresentação completa do produto." },
-    { id: "isometric", kind: "isometric", durationInFrames: 150, title: "MUNDOS EM 3D", subtitle: "Cenários construídos por código.", narration: "Cidades, objetos e mundos tridimensionais." },
-    { id: "storybook", kind: "storybook", durationInFrames: 120, title: "HISTÓRIAS ILUSTRADAS", subtitle: "Imaginação, cor e emoção.", narration: "Histórias infantis contadas com delicadeza." },
-    { id: "traffic", kind: "traffic", durationInFrames: 120, title: "MOVIMENTO E INFORMAÇÃO", subtitle: "Animações explicativas e dinâmicas.", narration: "E animações técnicas que tornam assuntos complexos mais claros." }
+    { id: "shaker-hook", kind: "product", durationInFrames: 150, title: "SUA ROTINA. SEU RITMO.", subtitle: "Coqueteleira Shaker Go 600 ml Fumê", narration: "Sua rotina de treino merece praticidade. Conheça a Shaker Go de 600 ml." },
+    { id: "shaker-capacity", kind: "product", durationInFrames: 150, title: "600 ML DE CAPACIDADE", subtitle: "Espaço para acompanhar seu treino", narration: "Com capacidade de 600 ml, ela acompanha você na academia e no dia a dia." },
+    { id: "shaker-design", kind: "product", durationInFrames: 150, title: "VISUAL FUMÊ. ESTILO MARCANTE.", subtitle: "Acabamento preto translúcido", narration: "O visual fumê traz um estilo moderno para sua rotina." },
+    { id: "shaker-lid", kind: "product", durationInFrames: 150, title: "TAMPA E SOBRE ALÇA", subtitle: "Detalhes que fazem a diferença", narration: "Conta com tampa e sobrealça para facilitar o transporte." },
+    { id: "shaker-gym", kind: "product", durationInFrames: 150, title: "LEVE PARA A ACADEMIA", subtitle: "Sua companheira de treino", narration: "Leve sua coqueteleira com você e mantenha sua rotina em movimento." },
+    { id: "shaker-cta", kind: "product", durationInFrames: 150, title: "PRONTA PARA SEU PRÓXIMO TREINO?", subtitle: "Shaker Go 600 ml Fumê", narration: "Gostou? Confira os detalhes e garanta a sua." }
   ]
 };
 
-const mixDuration = getTimelineDuration(mixDemo.scenes);
+const mixDuration = getTimelineDuration(shakerAd.scenes);
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -68,7 +69,7 @@ export const RemotionRoot: React.FC = () => (
       height={1080}
       defaultProps={demo}
       calculateMetadata={({ props }) => {
-        const totalSeconds = props.scenes.reduce((total, scene) => total + Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\s+/).filter(Boolean).length / 2.5))), 0);
+        const totalSeconds = props.scenes.reduce((total, scene) => total + Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\\s+/).filter(Boolean).length / 2.5))), 0);
         return { durationInFrames: Math.max(1, Math.ceil(totalSeconds * 30)) };
       }}
     />
@@ -92,8 +93,8 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={reflexaoDemo}
       calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)) })}
     />
-    <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={mixDemo} />
-    <Composition id="MixEngineLandscape" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1920} height={1080} defaultProps={mixDemo} />
-    <Composition id="MixEngineSquare" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1080} defaultProps={mixDemo} />
+    <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={shakerAd} />
+    <Composition id="MixEngineLandscape" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1920} height={1080} defaultProps={shakerAd} />
+    <Composition id="MixEngineSquare" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1080} defaultProps={shakerAd} />
   </>
 );
