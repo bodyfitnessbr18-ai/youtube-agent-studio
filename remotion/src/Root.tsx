@@ -58,7 +58,22 @@ const shakerAd: MixVisualEngineProps = {
   ]
 };
 
+const editIADemo: MixVisualEngineProps = {
+  title: "EDIT IA — NOVO PROJETO",
+  brandName: "EDIT IA",
+  accent: "#ff842d",
+  showCaptions: true,
+  musicVolume: 0.14,
+  scenes: [
+    { id: "edit-ia-welcome", kind: "editorial", durationInFrames: 150, title: "SEU VÍDEO. SUA EDIÇÃO.", subtitle: "EDIT IA Studio", narration: "Adicione seus vídeos e monte sua edição." }
+  ]
+};
+
 const mixDuration = getTimelineDuration(shakerAd.scenes);
+const editIADuration = getTimelineDuration(editIADemo.scenes);
+const editIAProps = (props: MixVisualEngineProps) => ({
+  durationInFrames: Math.max(1, getTimelineDuration(props.scenes)),
+});
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -98,5 +113,8 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={shakerAd} />
     <Composition id="MixEngineLandscape" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1920} height={1080} defaultProps={shakerAd} />
     <Composition id="MixEngineSquare" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1080} defaultProps={shakerAd} />
+    <Composition id="EditIAVertical" component={MixVisualEngine} durationInFrames={editIADuration} fps={30} width={1080} height={1920} defaultProps={editIADemo} calculateMetadata={({ props }) => editIAProps(props)} />
+    <Composition id="EditIALandscape" component={MixVisualEngine} durationInFrames={editIADuration} fps={30} width={1920} height={1080} defaultProps={editIADemo} calculateMetadata={({ props }) => editIAProps(props)} />
+    <Composition id="EditIASquare" component={MixVisualEngine} durationInFrames={editIADuration} fps={30} width={1080} height={1080} defaultProps={editIADemo} calculateMetadata={({ props }) => editIAProps(props)} />
   </>
 );
