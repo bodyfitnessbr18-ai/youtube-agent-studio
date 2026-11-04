@@ -11,6 +11,8 @@ export type MixScene = {
   narration?: string;
   accent?: string;
   background?: string;
+  /** Relative path inside remotion/public, e.g. generated-videos/clip.mp4 */
+  videoSrc?: string;
 };
 
 export type MixVisualEngineProps = {
