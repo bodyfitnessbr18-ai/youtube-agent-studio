@@ -26,6 +26,7 @@ const page = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><met
 <section class="panel"><h2>Roteiro por cenas</h2><p class="muted">Edite os títulos, textos e narrações. O motor calcula a duração com base na fala.</p><div id="scenes"></div><button id="add">+ Adicionar cena</button></section>
 <section class="panel"><h2>Gerar projeto</h2><button id="save">Salvar configuração do anúncio</button><button id="download">Baixar JSON</button><div class="status" id="status">Pronto para montar seu anúncio.</div><p class="muted">O arquivo será salvo em public/mix-project.json. Depois, use o comando de renderização exibido aqui.</p></section>
 </main><script>
+const kinds = ["product","editorial","storybook","isometric","traffic"];
 const $=id=>document.getElementById(id);let scenes=[
 {title:"SUA ROTINA. SEU RITMO.",subtitle:"Shaker Go 600 ml Fumê",narration:"Sua rotina de treino merece praticidade. Conheça a Shaker Go de 600 ml.",kind:"product",videoSrc:""},
 {title:"600 ML DE CAPACIDADE",subtitle:"Espaço para acompanhar seu treino",narration:"Com capacidade de 600 ml, ela acompanha você na academia e no dia a dia.",kind:"product"},
