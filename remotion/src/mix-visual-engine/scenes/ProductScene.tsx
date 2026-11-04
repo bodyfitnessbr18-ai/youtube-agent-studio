@@ -7,7 +7,7 @@ export const ProductScene: React.FC<{ scene: MixScene; accent?: string }> = ({ s
   const rise = interpolate(frame, [0, 24], [180, 0], { extrapolateRight: "clamp" });
   const rotate = interpolate(frame, [0, 90], [-9, 5], { extrapolateRight: "clamp" });
   if (scene.videoSrc) {
-    const videoPath = scene.videoSrc.replace(/^\\/+/, "");
+    const videoPath = scene.videoSrc.replace(/^\/+/, "");
     return (
       <AbsoluteFill style={{ backgroundColor: "#080a0e", overflow: "hidden" }}>
         <OffthreadVideo
