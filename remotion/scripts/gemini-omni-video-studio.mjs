@@ -3,19 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import { Client, handle_file } from "@gradio/client";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_DIR = path.join(ROOT, "public", "generated-videos");
 const PORT = Number(process.env.GEMINI_VIDEO_PORT || 4180);
-const MODEL = process.env.GEMINI_VIDEO_MODEL || "gemini-omni-1.1-flash";
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const SPACE_ID = process.env.WAN_SPACE_ID || "r3gm/wan2-2-fp8da-aoti-preview2";
+const SPACE_URL = "https://r3gm-wan2-2-fp8da-aoti-preview2.hf.space";
 
 function loadEnv() {
   for (const filename of [".env.local", ".env"]) {
     const full = path.join(ROOT, filename);
     if (!fs.existsSync(full)) continue;
     for (const line of fs.readFileSync(full, "utf8").split(/\r?\n/)) {
-      const match = line.match(/^\s*(?:export\s+)?(GEMINI_API_KEY|GEMINI_VIDEO_MODEL|GEMINI_VIDEO_PORT)\s*=\s*(.*?)\s*$/);
+      const match = line.match(/^\s*(?:export\s+)?(HF_TOKEN|WAN_SPACE_ID|GEMINI_VIDEO_PORT)\s*=\s*(.*?)\s*$/);
       if (match && !process.env[match[1]]) process.env[match[1]] = match[2].replace(/^["']|["']$/g, "");
     }
   }
@@ -26,14 +27,14 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><met
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0d1119;color:#f5f7fb;font:15px system-ui;padding:28px}main{max-width:760px;margin:auto}.panel{background:#171e2a;border:1px solid #303b4c;border-radius:16px;padding:22px;margin:16px 0}h1{margin:0 0 8px;font-size:28px}p{color:#aeb9ca;line-height:1.55}label{display:block;margin:15px 0 7px;font-weight:650}input,textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #39465a;background:#0e1520;color:#fff;font:inherit}textarea{min-height:120px}button{margin-top:16px;padding:13px 18px;border:0;border-radius:10px;background:#f47a20;color:#171717;font-weight:800;cursor:pointer}button:disabled{opacity:.55}.status{white-space:pre-wrap;color:#b7c4d8;margin-top:14px}video{width:100%;margin-top:14px;border-radius:12px;background:#000}.hint{font-size:12px;color:#8c9bb0}
 </style></head><body><main><h1>Mix Visual Engine • Vídeo generativo</h1>
-<p>Teste real do Gemini Omni Flash: transforma uma imagem de referência do produto em um clipe vertical com movimento cinematográfico.</p>
+<p>Wan 2.2 Image-to-Video: anima a imagem do produto com movimento cinematográfico usando GPU compartilhada do Hugging Face.</p>
 <section class="panel"><label for="product">Nome do produto</label><input id="product" placeholder="Ex.: Coqueteleira Shaker Go 600 ml fumê">
 <label for="image">URL pública da imagem do produto</label><input id="image" type="url" placeholder="https://...">
 <label for="scene">Direção da cena</label><textarea id="scene">Commercial footage, photorealistic. A fit adult athlete picks up the exact product and uses it naturally in a modern gym. Smooth camera push-in, subtle handheld movement, realistic lighting, premium product advertising. Preserve the product's shape, color, lid, proportions and visible details from the reference image. Do not invent logos, text or product features. No subtitles or on-screen text.</textarea>
-<button id="generate">Gerar clipe com IA</button><div class="status" id="status">Aguardando. A geração usa créditos pagos da API Gemini.</div><video id="preview" controls playsinline></video><p class="hint">Este é um teste de geração de vídeo. O fluxo automático com link Shopee será conectado ao adaptador de produto depois que localizarmos a integração Shopee existente.</p></section></main>
+<button id="generate">Gerar clipe com IA</button><div class="status" id="status">Aguardando. O Wan 2.2 usa GPU compartilhada; pode haver fila ou indisponibilidade.</div><video id="preview" controls playsinline></video><p class="hint">Este é um teste de geração de vídeo. O fluxo automático com link Shopee será conectado ao adaptador de produto depois que localizarmos a integração Shopee existente.</p></section></main>
 <script>
 const $=id=>document.getElementById(id);
-$("generate").onclick=async()=>{const b=$("generate");b.disabled=true;$("status").textContent="Enviando imagem e prompt ao Gemini Omni Flash. A geração pode levar alguns minutos...";$("preview").removeAttribute("src");
+$("generate").onclick=async()=>{const b=$("generate");b.disabled=true;$("status").textContent="Enviando imagem para o Hugging Face Wan 2.2. A fila pode levar alguns minutos...";$("preview").removeAttribute("src");
 try{const r=await fetch("/api/generate-scene",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productName:$("product").value,imageUrl:$("image").value,prompt:$("scene").value})});if(!r.ok)throw new Error(await r.text());const data=await r.json();$("preview").src=data.videoUrl;$("preview").load();$("status").textContent="Clipe gerado e salvo em: "+data.file+"\\nModelo: "+data.model;}catch(e){$("status").textContent="Falha: "+e.message;}finally{b.disabled=false;}};
 </script></body></html>`;
 
@@ -74,37 +75,45 @@ async function getReferenceImage(payload) {
 }
 
 async function generateClip(payload) {
-  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY ausente. Adicione a chave em remotion/.env.local.");
   const productName = String(payload.productName || "produto").slice(0, 180);
   const prompt = String(payload.prompt || "").trim();
   if (!prompt || prompt.length > 5000) throw new Error("Informe uma direção de cena (até 5.000 caracteres).");
   const { buffer, mime } = await getReferenceImage(payload);
-  const input = [
-    { type: "image", data: buffer.toString("base64"), mime_type: mime },
-    { type: "text", text: "Create a polished, photorealistic product advertisement video. Product: " + productName + ". Use the reference image to preserve the product identity. " + prompt }
-  ];
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      input,
-      generation_config: { video_config: { task: "image_to_video" } },
-      response_format: [{ type: "video", aspect_ratio: "9:16", resolution: "720p", duration: "5s" }]
-    }),
-    signal: AbortSignal.timeout(12 * 60 * 1000)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error("Gemini API (" + response.status + "): " + JSON.stringify(data).slice(0, 1200));
-  const stepVideo = data.steps?.flatMap((step) => step.content || []).find((part) => part.type === "video" && part.data);
-  const videoBase64 = data.output_video?.data || stepVideo?.data;
-  if (!videoBase64) throw new Error("A API respondeu, mas não retornou vídeo. Resposta: " + JSON.stringify(data).slice(0, 1200));
-  const video = Buffer.from(videoBase64, "base64");
-  if (video.length < 1000) throw new Error("O arquivo de vídeo retornado parece inválido.");
+  const tempImage = path.join(OUTPUT_DIR, ".input-" + randomUUID() + (mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg"));
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  const filename = "mix-ai-" + randomUUID() + ".mp4";
-  fs.writeFileSync(path.join(OUTPUT_DIR, filename), video);
-  return { filename, bytes: video.length, model: MODEL };
+  fs.writeFileSync(tempImage, buffer);
+  let client;
+  try {
+    client = await Client.connect(SPACE_ID, process.env.HF_TOKEN ? { hf_token: process.env.HF_TOKEN } : {});
+    const fullPrompt = "Product advertising footage for " + productName + ". " + prompt +
+      " Preserve the reference product shape, color, proportions and visible details. Do not add logos, text or features.";
+    const result = await client.predict("/generate_video", [
+      handle_file(tempImage), null, fullPrompt, 6,
+      "low quality, flicker, jitter, distorted product, extra objects, text, watermark",
+      3.5, 1, 1, -1, true, 6, "UniPCMultistep", 3, 24,
+      "4x-UltraSharp", 1, true, true, true
+    ]);
+    const output = result?.data?.[0] || result?.data?.[1];
+    const videoUrl = typeof output === "string" ? output : output?.url;
+    if (!videoUrl) throw new Error("O Space respondeu, mas não retornou um arquivo de vídeo: " + JSON.stringify(result?.data).slice(0, 1000));
+    const absoluteUrl = videoUrl.startsWith("http") ? videoUrl : new URL(videoUrl, SPACE_URL).toString();
+    const videoResponse = await fetch(absoluteUrl, { signal: AbortSignal.timeout(120000) });
+    if (!videoResponse.ok) throw new Error("Não foi possível baixar o vídeo gerado (" + videoResponse.status + ").");
+    const video = Buffer.from(await videoResponse.arrayBuffer());
+    if (video.length < 1000) throw new Error("O vídeo retornado parece inválido.");
+    const filename = "mix-wan22-" + randomUUID() + ".mp4";
+    fs.writeFileSync(path.join(OUTPUT_DIR, filename), video);
+    return { filename, bytes: video.length, model: "Wan 2.2 I2V • Hugging Face Space " + SPACE_ID };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    if (/429|queue|gpu|zero.?gpu|overloaded/i.test(message)) {
+      throw new Error("O Hugging Face está com fila ou limite de GPU no momento. Aguarde alguns minutos e tente novamente. Detalhe: " + message.slice(0, 500));
+    }
+    throw error;
+  } finally {
+    try { fs.unlinkSync(tempImage); } catch {}
+    try { await client?.close?.(); } catch {}
+  }
 }
 
 const server = http.createServer(async (req, res) => {
@@ -134,6 +143,6 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(PORT, "127.0.0.1", () => {
   console.log("Mix AI Video Studio: http://localhost:" + PORT);
-  console.log("Model: " + MODEL);
-  if (!process.env.GEMINI_API_KEY) console.log("Configure GEMINI_API_KEY em remotion/.env.local.");
+  console.log("Hugging Face Space: " + SPACE_ID);
+  console.log("GPU compartilhada; não é uma cota garantida.");
 });
