@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
 import type { MixVisualEngineProps } from "./types";
 import { buildTimeline } from "./timeline";
 import { SceneWithFade } from "./SceneWithFade";
@@ -10,6 +10,8 @@ export const MixVisualEngine: React.FC<MixVisualEngineProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const timeline = buildTimeline(scenes);
+  const voiceSource = voiceSrc ? (voiceSrc.startsWith("http") ? voiceSrc : staticFile(voiceSrc.replace(/^\\/+/, ""))) : undefined;
+  const musicSource = musicSrc ? (musicSrc.startsWith("http") ? musicSrc : staticFile(musicSrc.replace(/^\\/+/, ""))) : undefined;
   const fade = interpolate(frame, [0, 18], [0, 1], { extrapolateRight: "clamp" });
   return (
     <AbsoluteFill style={{ backgroundColor: "#10131c", opacity: fade }}>
@@ -18,8 +20,8 @@ export const MixVisualEngine: React.FC<MixVisualEngineProps> = ({
           <SceneWithFade scene={entry} accent={accent} showCaptions={showCaptions} />
         </Sequence>
       ))}
-      {voiceSrc && <Audio src={voiceSrc} volume={1} />}
-      {musicSrc && <Audio src={musicSrc} volume={musicVolume} loop />}
+      {voiceSource && <Audio src={voiceSource} volume={1} />}
+      {musicSource && <Audio src={musicSource} volume={musicVolume} loop />}
       <div style={{ position: "absolute", top: 22, left: 28, right: 28, display: "flex", justifyContent: "space-between", color: "#ffffffa8", fontSize: 14, letterSpacing: ".16em", fontWeight: 800, opacity: fade, pointerEvents: "none" }}>
         <span>{brandName}</span><span>{title}</span>
       </div>
