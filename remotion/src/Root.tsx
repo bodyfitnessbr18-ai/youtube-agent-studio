@@ -95,7 +95,7 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={reflexaoDemo}
       calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)) })}
     />
-    <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={shakerAd} />
+    <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={shakerAd} calculateMetadata={({ props }) => ({ durationInFrames: getTimelineDuration(props.scenes) })} />
     <Composition id="MixEngineLandscape" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1920} height={1080} defaultProps={shakerAd} />
     <Composition id="MixEngineSquare" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1080} defaultProps={shakerAd} />
   </>
