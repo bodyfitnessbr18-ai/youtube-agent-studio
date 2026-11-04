@@ -92,7 +92,7 @@ async function generateClip(payload) {
     const result = await client.predict("/generate_video", [
       handle_file(tempImage), null, fullPrompt, 6,
       "low quality, flicker, jitter, distorted product, extra objects, text, watermark",
-      3.5, 1, 1, 42, true, 6, "UniPCMultistep", 6, 32,
+      6.0, 1, 1, 42, true, 6, "UniPCMultistep", 6, 32,
       "4x-UltraSharp", 1, true, true, true
     ]);
     const output = result?.data?.[0] || result?.data?.[1];
