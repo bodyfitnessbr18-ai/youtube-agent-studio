@@ -2,8 +2,7 @@ import React from "react";
 import { AbsoluteFill, Audio, Sequence, interpolate, useCurrentFrame } from "remotion";
 import type { MixVisualEngineProps } from "./types";
 import { buildTimeline } from "./timeline";
-import { SceneRenderer } from "./SceneRenderer";
-import { WordCaption } from "./WordCaption";
+import { SceneWithFade } from "./SceneWithFade";
 
 export const MixVisualEngine: React.FC<MixVisualEngineProps> = ({
   title, scenes, voiceSrc, musicSrc, showCaptions = true, musicVolume = 0.16,
@@ -16,10 +15,7 @@ export const MixVisualEngine: React.FC<MixVisualEngineProps> = ({
     <AbsoluteFill style={{ backgroundColor: "#10131c", opacity: fade }}>
       {timeline.map((entry) => (
         <Sequence key={entry.id} from={entry.from} durationInFrames={entry.durationInFrames} name={entry.id}>
-          <SceneRenderer scene={entry} accent={accent} />
-          {showCaptions && entry.narration && (
-            <WordCaption text={entry.narration} durationInFrames={entry.durationInFrames} accent={entry.accent ?? accent} />
-          )}
+          <SceneWithFade scene={entry} accent={accent} showCaptions={showCaptions} />
         </Sequence>
       ))}
       {voiceSrc && <Audio src={voiceSrc} volume={1} />}
