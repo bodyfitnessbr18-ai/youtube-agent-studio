@@ -13,7 +13,8 @@
     "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4 --gl=swangle",
     "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4 --gl=swangle",
     "typecheck": "tsc --noEmit",
-    "voice-studio": "node scripts/fish-voice-studio.mjs"
+    "voice-studio": "node scripts/fish-voice-studio.mjs",
+    "mix-studio": "node scripts/mix-project-studio.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "8.18.0",
