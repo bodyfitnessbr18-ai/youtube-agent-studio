@@ -90,7 +90,7 @@ async function generateClip(payload) {
       model: MODEL,
       input,
       generation_config: { video_config: { task: "image_to_video" } },
-      response_format: { type: "video", aspect_ratio: "9:16", resolution: "720p" }
+      response_format: [{ type: "video", aspect_ratio: "9:16", resolution: "720p", duration: "5s" }]
     }),
     signal: AbortSignal.timeout(12 * 60 * 1000)
   });
@@ -126,8 +126,10 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(404); res.end("Not found");
   } catch (error) {
-    res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end(error instanceof Error ? error.message : "Erro inesperado");
+    const message = error instanceof Error ? error.message : "Erro inesperado";
+    console.error("[Mix AI Video Studio]", message);
+    res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(message);
   }
 });
 server.listen(PORT, "127.0.0.1", () => {
