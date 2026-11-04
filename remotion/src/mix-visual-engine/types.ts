@@ -1,4 +1,4 @@
-export type MixSceneKind = "editorial" | "product" | "isometric" | "storybook" | "traffic";
+export type MixSceneKind = "editorial" | "product" | "isometric" | "storybook" | "traffic" | "video";
 
 export type MixFormat = "vertical" | "horizontal" | "square";
 
@@ -11,8 +11,11 @@ export type MixScene = {
   narration?: string;
   accent?: string;
   background?: string;
-  /** Relative path inside remotion/public, e.g. generated-videos/clip.mp4 */
+  /** Relative path inside remotion/public, e.g. edit-ia-assets/clip.mp4 */
   videoSrc?: string;
+  /** Source video offset in frames, at the composition FPS. */
+  videoStartFrame?: number;
+  videoFit?: "cover" | "contain";
 };
 
 export type MixVisualEngineProps = {
