@@ -84,13 +84,15 @@ async function generateClip(payload) {
   fs.writeFileSync(tempImage, buffer);
   let client;
   try {
+    console.log("[Mix AI Video Studio] Conectando ao Space:", SPACE_ID);
     client = await Client.connect(SPACE_ID, process.env.HF_TOKEN ? { hf_token: process.env.HF_TOKEN } : {});
+    console.log("[Mix AI Video Studio] Conectado. Enviando imagem e prompt para /generate_video.");
     const fullPrompt = "Product advertising footage for " + productName + ". " + prompt +
       " Preserve the reference product shape, color, proportions and visible details. Do not add logos, text or features.";
     const result = await client.predict("/generate_video", [
       handle_file(tempImage), null, fullPrompt, 6,
       "low quality, flicker, jitter, distorted product, extra objects, text, watermark",
-      3.5, 1, 1, -1, true, 6, "UniPCMultistep", 3, 24,
+      3.5, 1, 1, 42, true, 6, "UniPCMultistep", 6, 24,
       "4x-UltraSharp", 1, true, true, true
     ]);
     const output = result?.data?.[0] || result?.data?.[1];
@@ -105,7 +107,8 @@ async function generateClip(payload) {
     fs.writeFileSync(path.join(OUTPUT_DIR, filename), video);
     return { filename, bytes: video.length, model: "Wan 2.2 I2V • Hugging Face Space " + SPACE_ID };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro inesperado";
+    const message = error instanceof Error ? error.message : (typeof error === "string" ? error : JSON.stringify(error) || String(error));
+    console.error("[Mix AI Video Studio] Falha detalhada:", error?.stack || error);
     if (/429|queue|gpu|zero.?gpu|overloaded/i.test(message)) {
       throw new Error("O Hugging Face está com fila ou limite de GPU no momento. Aguarde alguns minutos e tente novamente. Detalhe: " + message.slice(0, 500));
     }
@@ -135,8 +138,8 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(404); res.end("Not found");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro inesperado";
-    console.error("[Mix AI Video Studio]", message);
+    const message = error instanceof Error ? error.message : (typeof error === "string" ? error : JSON.stringify(error) || String(error));
+    console.error("[Mix AI Video Studio] Erro na requisição:", error?.stack || error);
     res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
     res.end(message);
   }
