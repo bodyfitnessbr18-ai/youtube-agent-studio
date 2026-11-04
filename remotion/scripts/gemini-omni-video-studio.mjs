@@ -34,7 +34,7 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><met
 <script>
 const $=id=>document.getElementById(id);
 $("generate").onclick=async()=>{const b=$("generate");b.disabled=true;$("status").textContent="Enviando imagem e prompt ao Gemini Omni Flash. A geração pode levar alguns minutos...";$("preview").removeAttribute("src");
-try{const r=await fetch("/api/generate-scene",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productName:$("product").value,imageUrl:$("image").value,prompt:$("scene").value})});if(!r.ok)throw new Error(await r.text());const data=await r.json();$("preview").src=data.videoUrl;$("preview").load();$("status").textContent="Clipe gerado e salvo em: "+data.file+"\nModelo: "+data.model;}catch(e){$("status").textContent="Falha: "+e.message;}finally{b.disabled=false;}};
+try{const r=await fetch("/api/generate-scene",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({productName:$("product").value,imageUrl:$("image").value,prompt:$("scene").value})});if(!r.ok)throw new Error(await r.text());const data=await r.json();$("preview").src=data.videoUrl;$("preview").load();$("status").textContent="Clipe gerado e salvo em: "+data.file+"\\nModelo: "+data.model;}catch(e){$("status").textContent="Falha: "+e.message;}finally{b.disabled=false;}};
 </script></body></html>`;
 
 async function readJson(req) {
