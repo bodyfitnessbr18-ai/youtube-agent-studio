@@ -68,7 +68,7 @@ export const RemotionRoot: React.FC = () => (
       height={1080}
       defaultProps={demo}
       calculateMetadata={({ props }) => {
-        const totalSeconds = props.scenes.reduce((total, scene) => total + Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\\s+/).filter(Boolean).length / 2.5))), 0);
+        const totalSeconds = props.scenes.reduce((total, scene) => total + Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\s+/).filter(Boolean).length / 2.5))), 0);
         return { durationInFrames: Math.max(1, Math.ceil(totalSeconds * 30)) };
       }}
     />
