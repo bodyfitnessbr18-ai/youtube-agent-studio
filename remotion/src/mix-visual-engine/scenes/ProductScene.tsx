@@ -1,11 +1,28 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, OffthreadVideo, interpolate, staticFile, useCurrentFrame } from "remotion";
 import type { MixScene } from "../types";
 
 export const ProductScene: React.FC<{ scene: MixScene; accent?: string }> = ({ scene, accent = "#c58b55" }) => {
   const frame = useCurrentFrame();
   const rise = interpolate(frame, [0, 24], [180, 0], { extrapolateRight: "clamp" });
   const rotate = interpolate(frame, [0, 90], [-9, 5], { extrapolateRight: "clamp" });
+  if (scene.videoSrc) {
+    const videoPath = scene.videoSrc.replace(/^\\/+/, "");
+    return (
+      <AbsoluteFill style={{ backgroundColor: "#080a0e", overflow: "hidden" }}>
+        <OffthreadVideo
+          src={staticFile(videoPath)}
+          muted
+          loop
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", padding: "0 7% 13%", background: "linear-gradient(180deg, transparent 55%, rgba(0,0,0,.72) 100%)" }}>
+          <div style={{ color: "#fff", textAlign: "center", fontSize: "clamp(30px,5vw,76px)", lineHeight: 1.05, fontWeight: 900, textShadow: "0 3px 18px #000" }}>{scene.title}</div>
+          {scene.subtitle && <div style={{ color: "#fff", marginTop: 16, fontSize: "clamp(16px,2vw,28px)", textShadow: "0 2px 12px #000" }}>{scene.subtitle}</div>}
+        </AbsoluteFill>
+      </AbsoluteFill>
+    );
+  }
   return (
     <AbsoluteFill style={{ background: scene.background ?? "radial-gradient(circle at 50% 40%, #fff 0%, #e9e1d5 72%, #d5c8b8 100%)", color: "#24211e", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <div style={{ position: "absolute", width: "65%", height: "65%", borderRadius: "50%", background: scene.accent ?? accent, opacity: 0.12, filter: "blur(35px)" }} />
