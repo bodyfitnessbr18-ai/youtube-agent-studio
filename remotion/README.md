@@ -35,3 +35,39 @@ Put audio files inside `public/` and set `audioSrc` or `musicSrc` in `props.json
 - This is a local Remotion render workflow; Vercel's serverless web deployment is not itself the video rendering worker.
 
 Do not put API keys in this repository.
+
+
+## Mix Visual Engine
+
+A new modular engine is available under `src/mix-visual-engine/`. It adds editorial, product, isometric 3D, storybook and traffic scene families while preserving the existing `YouTubeVideo`, `SleepVideo` and `ReflexaoBiblica` compositions.
+
+### Install and run
+
+```bash
+cd remotion
+npm install
+npm run dev
+```
+
+Open `MixEngineVertical`, `MixEngineLandscape` or `MixEngineSquare` in Remotion Studio.
+
+Render a demo:
+
+```bash
+npm run render:mix-demo
+```
+
+Render landscape or square:
+
+```bash
+npm run render:mix-landscape
+npm run render:mix-square
+```
+
+Type-check the project:
+
+```bash
+npm run typecheck
+```
+
+The engine uses `@remotion/three`, React Three Fiber and Three.js for the isometric scene. The CLI presets use `--gl=swangle` for software WebGL in CPU-only cloud environments; desktop GPU rendering can use `angle`. The first product, storybook and traffic scenes are visual foundations; production assets, advanced camera paths, timed subtitles, procedural sound/music and render QA are the next development phase. See `src/mix-visual-engine/README.md`.

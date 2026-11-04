@@ -1,8 +1,9 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, staticFile } from "remotion";
 import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
 import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 import { ReflexaoBiblica, type ReflexaoBiblicaProps } from "./ReflexaoBiblica";
+import { MixVisualEngine, getTimelineDuration, type MixVisualEngineProps } from "./mix-visual-engine";
 
 const demo: VideoProps = {
   title: "Seu dinheiro está desaparecendo?",
@@ -27,7 +28,6 @@ const sleepDemo: SleepVideoProps = {
   })),
 };
 
-
 const reflexaoDemo: ReflexaoBiblicaProps = {
   videoSrc: "",
   headline: "Com sabedoria se edifica a casa...",
@@ -40,8 +40,25 @@ const reflexaoDemo: ReflexaoBiblicaProps = {
   durationSeconds: 10,
 };
 
-const estimateSceneSeconds = (scene: VideoProps["scenes"][number]) =>
-  Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\s+/).filter(Boolean).length / 2.5)));
+const shakerAd: MixVisualEngineProps = {
+  title: "COQUETELEIRA SHAKER GO 600 ML",
+  brandName: "MIX",
+  accent: "#f47a20",
+  showCaptions: true,
+  musicVolume: 0.14,
+  voiceSrc: staticFile("shaker-assets/narration.mp3"),
+  musicSrc: staticFile("shaker-assets/music-bed.mp3"),
+  scenes: [
+    { id: "shaker-hook", kind: "product", durationInFrames: 150, title: "SUA ROTINA. SEU RITMO.", subtitle: "Coqueteleira Shaker Go 600 ml Fumê", narration: "Sua rotina de treino merece praticidade. Conheça a Shaker Go de 600 ml." },
+    { id: "shaker-capacity", kind: "product", durationInFrames: 150, title: "600 ML DE CAPACIDADE", subtitle: "Espaço para acompanhar seu treino", narration: "Com capacidade de 600 ml, ela acompanha você na academia e no dia a dia." },
+    { id: "shaker-design", kind: "product", durationInFrames: 150, title: "VISUAL FUMÊ. ESTILO MARCANTE.", subtitle: "Acabamento preto translúcido", narration: "O visual fumê traz um estilo moderno para sua rotina." },
+    { id: "shaker-lid", kind: "product", durationInFrames: 150, title: "TAMPA E SOBRE ALÇA", subtitle: "Detalhes que fazem a diferença", narration: "Conta com tampa e sobrealça para facilitar o transporte." },
+    { id: "shaker-gym", kind: "product", durationInFrames: 150, title: "LEVE PARA A ACADEMIA", subtitle: "Sua companheira de treino", narration: "Leve sua coqueteleira com você e mantenha sua rotina em movimento." },
+    { id: "shaker-cta", kind: "product", durationInFrames: 150, title: "PRONTA PARA SEU PRÓXIMO TREINO?", subtitle: "Shaker Go 600 ml Fumê", narration: "Gostou? Confira os detalhes e garanta a sua." }
+  ]
+};
+
+const mixDuration = getTimelineDuration(shakerAd.scenes);
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -54,7 +71,7 @@ export const RemotionRoot: React.FC = () => (
       height={1080}
       defaultProps={demo}
       calculateMetadata={({ props }) => {
-        const totalSeconds = props.scenes.reduce((total, scene) => total + estimateSceneSeconds(scene), 0);
+        const totalSeconds = props.scenes.reduce((total, scene) => total + Math.max(3, scene.durationSeconds ?? Math.max(8, Math.round((scene.narration || "").trim().split(/\\s+/).filter(Boolean).length / 2.5))), 0);
         return { durationInFrames: Math.max(1, Math.ceil(totalSeconds * 30)) };
       }}
     />
@@ -66,9 +83,7 @@ export const RemotionRoot: React.FC = () => (
       width={1920}
       height={1080}
       defaultProps={sleepDemo}
-      calculateMetadata={({ props }) => ({
-        durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)),
-      })}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)) })}
     />
     <Composition
       id="ReflexaoBiblica"
@@ -78,9 +93,10 @@ export const RemotionRoot: React.FC = () => (
       width={1080}
       height={1920}
       defaultProps={reflexaoDemo}
-      calculateMetadata={({ props }) => ({
-        durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)),
-      })}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(1, Math.ceil(props.durationSeconds * 30)) })}
     />
+    <Composition id="MixEngineVertical" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1920} defaultProps={shakerAd} />
+    <Composition id="MixEngineLandscape" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1920} height={1080} defaultProps={shakerAd} />
+    <Composition id="MixEngineSquare" component={MixVisualEngine} durationInFrames={mixDuration} fps={30} width={1080} height={1080} defaultProps={shakerAd} />
   </>
 );
