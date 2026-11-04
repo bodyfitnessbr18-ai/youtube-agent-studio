@@ -1,4 +1,5 @@
 import { Config } from "@remotion/cli/config";
 
-// Three.js / WebGL rendering in headless Chromium.
-Config.setChromiumOpenGlRenderer("angle");
+// CPU-safe WebGL path for headless cloud rendering. On a desktop with a
+// compatible GPU, "angle" may render faster.
+Config.setChromiumOpenGlRenderer("swangle");
