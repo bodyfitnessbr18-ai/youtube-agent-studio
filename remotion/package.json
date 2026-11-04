@@ -12,9 +12,11 @@
     "render:mix-demo": "remotion render src/index.ts MixEngineVertical out/mix-visual-engine-demo.mp4 --gl=swangle",
     "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4 --gl=swangle",
     "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4 --gl=swangle",
+    "render:edit-ia": "node scripts/render-edit-ia.mjs",
     "typecheck": "tsc --noEmit",
     "voice-studio": "node scripts/fish-voice-studio.mjs",
     "mix-studio": "node scripts/mix-project-studio.mjs",
+    "edit-ia-studio": "node scripts/edit-ia-studio.mjs",
     "video-ai-studio": "node scripts/gemini-omni-video-studio.mjs"
   },
   "dependencies": {
