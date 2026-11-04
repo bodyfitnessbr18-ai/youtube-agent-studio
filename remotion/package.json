@@ -1,6 +1,6 @@
 {
   "name": "youtube-agent-remotion",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "remotion studio src/index.ts",
@@ -8,12 +8,19 @@
     "still": "remotion still src/index.ts YouTubeVideo out/thumbnail.png",
     "render:project": "remotion render src/index.ts YouTubeVideo out/youtube-video.mp4 --props-file=public/props.json",
     "render:sleep": "remotion render src/index.ts SleepVideo out/moonlight-ocean-dreams.mp4 --props-file=public/sleep-props.json",
-    "render:reflexao": "remotion render src/index.ts ReflexaoBiblica out/reflexao-biblica.mp4 --props-file=public/reflexao-props.json"
+    "render:reflexao": "remotion render src/index.ts ReflexaoBiblica out/reflexao-biblica.mp4 --props-file=public/reflexao-props.json",
+    "render:mix-demo": "remotion render src/index.ts MixEngineVertical out/mix-visual-engine-demo.mp4",
+    "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4",
+    "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4"
   },
   "dependencies": {
+    "@react-three/fiber": "8.18.0",
     "@remotion/cli": "4.0.539",
+    "@remotion/three": "4.0.539",
     "@remotion/web-renderer": "4.0.539",
+    "@types/three": "^0.171.0",
     "remotion": "4.0.539",
+    "three": "0.171.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
