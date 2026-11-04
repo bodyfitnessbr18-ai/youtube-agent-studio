@@ -1,5 +1,5 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, staticFile } from "remotion";
 import { YouTubeVideo, type VideoProps } from "./YouTubeVideo";
 import { SleepVideo, type SleepVideoProps } from "./SleepVideo";
 import { ReflexaoBiblica, type ReflexaoBiblicaProps } from "./ReflexaoBiblica";
@@ -46,6 +46,8 @@ const shakerAd: MixVisualEngineProps = {
   accent: "#f47a20",
   showCaptions: true,
   musicVolume: 0.14,
+  voiceSrc: staticFile("shaker-assets/narration.mp3"),
+  musicSrc: staticFile("shaker-assets/music-bed.mp3"),
   scenes: [
     { id: "shaker-hook", kind: "product", durationInFrames: 150, title: "SUA ROTINA. SEU RITMO.", subtitle: "Coqueteleira Shaker Go 600 ml Fumê", narration: "Sua rotina de treino merece praticidade. Conheça a Shaker Go de 600 ml." },
     { id: "shaker-capacity", kind: "product", durationInFrames: 150, title: "600 ML DE CAPACIDADE", subtitle: "Espaço para acompanhar seu treino", narration: "Com capacidade de 600 ml, ela acompanha você na academia e no dia a dia." },
