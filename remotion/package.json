@@ -11,7 +11,8 @@
     "render:reflexao": "remotion render src/index.ts ReflexaoBiblica out/reflexao-biblica.mp4 --props-file=public/reflexao-props.json",
     "render:mix-demo": "remotion render src/index.ts MixEngineVertical out/mix-visual-engine-demo.mp4",
     "render:mix-landscape": "remotion render src/index.ts MixEngineLandscape out/mix-visual-engine-landscape.mp4",
-    "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4"
+    "render:mix-square": "remotion render src/index.ts MixEngineSquare out/mix-visual-engine-square.mp4",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-three/fiber": "8.18.0",
